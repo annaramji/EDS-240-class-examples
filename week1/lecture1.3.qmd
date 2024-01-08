@@ -1,0 +1,48 @@
+---
+title: "Lecture 1.3"
+date: 2024-01-08
+---
+
+## Load packages
+
+```{r}
+library(tidyverse)
+library(palmerpenguins)
+```
+
+## Tidy data 
+
+In Tidy Data:
+
+- each variable forms a column
+- each observation forms a row
+- each cell forms a single measurement
+
+```{r}
+# untidy data ----
+temp_data_wide <- tribble(
+  ~date, ~station1, ~station2,  ~station3,
+  "2023-10-01", 30.1, 29.8,  31.2,
+  "2023-11-01", 28.6, 29.1,  33.4,
+  "2023-12-01", 29.9, 28.5,  32.3
+)
+
+# make tidy ----
+temp_data_long <- temp_data_wide |> 
+  pivot_longer(cols = starts_with("station"),
+               names_to = "station_id", 
+               values_to = "temp_c")
+```
+
+
+Now each station (1, 2, or 3) falls under the "station_id" column/variable and each row contains a single observation, containing information on date, station ID, and temperature (ºC).
+
+
+```{r}
+ggplot(data = penguins, aes(x = bill_length_mm,
+                            y = bill_depth_mm)) +
+  geom_point(aes(color = species)) + # map color locally, not globally 
+  scale_color_manual(values = c("#FF8302", "#C35CCA", "#067575")) # matching Allison's colors
+#  geom_smooth(method = "lm")
+```
+
