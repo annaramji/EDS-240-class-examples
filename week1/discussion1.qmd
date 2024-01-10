@@ -1,0 +1,41 @@
+---
+Author: "Anna Ramji"
+Date: 2024-01-10
+---
+
+# Week 1 Discussion:
+**Practicing cleaning, wrangling, annotating**
+
+## Load packages
+
+```{r}
+library(tidyverse)
+library(usdata)
+library(here)
+```
+
+## Read in data
+```{r}
+fracking_raw <- read_csv(here("week1", "data", "fracking.csv"))
+
+```
+
+## Preliminary exploration
+```{r}
+head(fracking_raw)
+
+```
+Yuck! super messy. We have inconsistent CamelCase in the column names, inaccurate datatypes for data stored in columns (stored as characters, not datetime objects; some numbers stored as characters). 
+
+
+# Cleaning
+
+
+```{r}
+fracking_cleaned <- fracking_raw |> 
+  janitor::clean_names() |>  # tidying column names
+  
+
+
+```
+
