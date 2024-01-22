@@ -1,0 +1,242 @@
+---
+Author: "Anna Ramji"
+Date: 2024-01-22
+---
+
+# Week 3 Class Examples
+
+## Lecture 3.1: Choosing the right graphic form
+
+### We understand complex numbers better when they’re represented visually
+
+“Exams will have a total of 137 points rather than the usual 100. This scoring system has no effect on the grade you get in the course, but it seems to make you happier”
+
+-Richard H. Thaler, economist & professor
+
+Early years: exam graded 0 - 100 with an average score of 72 points = lots of complaints
+
+Later years: exam graded 0 - 137 with an average score of 96 points = very few complaints
+
+![](figs/complex-numbers-ex1.png){width="384"}
+
+**Vision is our most well-developed sense**
+
+-   Mapping data into visual properties is powerful
+
+Mapping: how values of variables of interest are represented by visuals (height of bar, etc.)
+
+### **How do you choose the right graphic form to represent your data?**
+
+“If I had the answer to that, I’d be rich by now…I have no idea, but I can give you some clues to make your own choices based on what we know about why and how visualization works” (Albert Cairo, The Truthful Art)
+
+### **Exercise: Map data to visual properties**
+
+Let’s say **you want to compare unemployment rates of 5 countries**: A, B, C, D, E (the actual values here are not important).
+
+How would you **map the unemployment rates to visual properties** in a way that enables your readers to accurately compare values without having to read all the numbers?
+
+-   map onto base map of the world, color fill or shade relevant countries with rates
+
+-   pop-out graphic of people (10 ppl shapes), shaded in to unemployment rate
+
+-   bar graph, ordered from lowest to highest, easily compare a, b, c, d, e
+
+class answer:
+
+-   length or height (bar, lolipop charts)
+
+-   position (distance along some range)
+
+-   area (bubble size)
+
+-   angle/area (pie charts)
+
+-   hue and shade
+
+### "Hierarchy of elementary perceptual tasks"
+
+-   William S. Cleveland & Robert McGill (1984) **Graphical Perception: Theory, Experimentation, and Application to the Development of Graphical Methods**, *Journal of the American Statistical Association*, 79:387, 531-554, DOI: [10.1080/01621459.1984.10478080](https://doi.org/10.1080/01621459.1984.10478080)
+
+-   a viewer performs one or more of these mental-visual tasks (judging position, perceiving angles / areas, etc.) to extract the values of real variables represented on most graphs
+
+```{=html}
+<!-- -->
+```
+-   successful charts are constructed based on elementary tasks “as high in the hierarchy as possible”
+
+![](figs/cairo-elementary-visual-perception.png){width="512"}
+
+Both differ by a factor of 7
+
+![](figs/seven-factor-diff.png)
+
+-   harder to tell in the circle
+
+### **Caveats to the hierarchy** 
+
+1\. Cleveland & McGill only considered *statistical charts*. What about data maps, for example, that rely on area / shading / hue, which fall lower on the hierarchy?
+
+Example:
+
+**Lower scale methods can be appropriate when the goal is to reveal general patterns.** For example, a choropleth map displays divided geographical areas / regions, which are colored in relation to a numeric variable. <https://samanthacsik.github.io/EDS-240-data-viz/slides/week3.1-choosing-graphic-forms-slides.html#/caveats1.1>
+
+-   precipitation by county, brown-white-blue
+
+2.  No method of choosing a graphic form is perfect! It’s important to think critically about your graphic’s purpose and how best to represent your data to serve that purpose.
+
+Example:
+
+Consider how you might display the same data in the following Sankey diagram, which depicts the flow of refugees in 2022, using graph types from the top of Cleveland & McGill’s hierarchy. **What is the purpose of this chart?** <https://samanthacsik.github.io/EDS-240-data-viz/slides/week3.1-choosing-graphic-forms-slides.html#/caveats2.1>
+
+interactive
+
+Graphic recreated using the [`{networkD3}` package](https://christophergandrud.github.io/networkD3/) following [Louise E. Sinks’](https://lsinks.github.io/) blog post, [TidyTuesday: Exploring Refugee Flow with A Sankey Diagram](https://lsinks.github.io/posts/2023-08-28-TidyTuesday-Refugees/TidyTuesday34-refugees.html)
+
+-   showing info, area-based, \# ppl from start country to destination country, flow, hover capabilities that show regions, numbers
+
+### **Tips for choosing the right graphic form**
+
+1.  **Think about the task(s) you want to enable or message(s) you want to convey.** For example, do you want to compare, see change or flow, reveal relationships or connections, envision temporal or spatial patterns.
+
+```{=html}
+<!-- -->
+```
+2.  **Consider the number of variables and the number of data points, as well as the data types you’re working with.** For example, do you have several vs. many data points? How many categorical and/or numeric variables? Are your variables ordered or not ordered? Data types can dictate which graphical form is appropriate.
+
+```{=html}
+<!-- -->
+```
+3.  **Try different graphic forms,** especially if you have more than one task to enable or message to convey.
+
+```{=html}
+<!-- -->
+```
+4.  **Arrange the components of the graphic** to make it as easy as possible to extract meaning from your graphic quickly.
+
+```{=html}
+<!-- -->
+```
+5.  **Test the outcomes of your graphic on others,** particularly on those who are representative of the audience you are trying to reach.
+
+------------------------------------------------------------------------
+
+### **1. What task(s) to enable / message(s) to convey**
+
+<https://samanthacsik.github.io/EDS-240-data-viz/slides/week3.1-choosing-graphic-forms-slides.html#/chart-selectors>
+
+![](images/clipboard-3034863021.png){width="594"}
+
+![](images/clipboard-173877662.png){width="599"}
+
+### **2. Number of variables & data points, data types**
+
+**Continuous variables:** temperature (10.6°C, 14.9°C, 8.1°C), rainfall (1.7”, 3.3”, 9.4”)
+
+**Discrete variables:** \# of species counted in a region (1, 4, 6), a county’s population size (1,578, 10,324, 540,013)
+
+**Nominal variables:** gender identity (cisgender, transgender, non-binary), species (dog, cat, bird), land use (residential, parks, agriculture)
+
+**Ordinal variables:** income level (low / middle / high), satisfaction level (unsatisfied, neutral, satisfied)
+
+**Binary:** penguin sex (male / female), habitat type (shade / sun)
+
+### **3. Try different graphic forms**
+
+Recall our choropleth map from earlier, which displays total precipitation by US county. What if we want to compare precipitation between CA counties? Choosing a graphical form from the top of the hierarchy (e.g. bar chart) may be more effective.
+
+### **4. Arrange components of the graphic**
+
+Example: How does the influence of **in-theater advertising** change across generations?
+
+![](images/clipboard-2640523695.png){width="569"}
+
+-   influence decreases in older generations
+
+-   intuitively want to read it from older to younger, flipped here
+
+Updated:
+
+![](images/clipboard-1287247787.png)
+
+-   direct comparisons within each category
+
+-   depends on what the goal of your plot is
+
+**Let’s say we’re interested in:**
+
+a.  changes in the amount spent on Social Security relative to other major spending categories over time (2012-2015)?
+
+b.  the amount of money spent on Social Security over time (2012-2015)? \[[slide](https://samanthacsik.github.io/EDS-240-data-viz/slides/week3.1-choosing-graphic-forms-slides.html#/fed-spending2)\]
+
+![](images/clipboard-3198616858.png)
+
+see slides for [heatmap example](https://samanthacsik.github.io/EDS-240-data-viz/slides/week3.1-choosing-graphic-forms-slides.html#/internet2)
+
+### **5. Test the outcomes of your graphic on others**
+
+![](images/clipboard-2106684503.png){width="591"}
+
+What is the take home message of this graphic?
+
+-   far more civilian deaths than coalition deaths
+
+-   US involvement heavy, deaths spike at key events
+
+-   biggest killer: executions
+
+What is effective? What is confusing?
+
+-   annoying that biggest killers aren't ranked by size
+
+-   so much going on
+
+-   we wish they had put the US ground troups overlay on the blood
+
+Baseline at the *top* is clear, suggesting that bars are *falling* from it. Clear metaphor (dripping blood).
+
+Example: classic florida gun viz
+
+![](images/clipboard-3407984365.png){width="348"}
+
+-   What is the take home message of this graphic?
+
+    -   take home message is that murders decrease (false)
+
+-   What is effective? What is confusing?
+
+    -   inverted plot causes misleading visualization
+
+    -   deaths actually spike after stand your ground law, not fall
+
+Eyes are drawn to baseline at the *bottom*, on top of which data are sitting. Headline indicates *rise* but visually represented by *falling*. Thick black line makes white area stand out over red (data).
+
+Business Insider [published](https://www.businessinsider.com/gun-deaths-in-florida-increased-with-stand-your-ground-2014-2) an updated graphic (originally designed by Reuters), which was submitted by a reader that, **“more clearly shows that gun deaths increased between 2005 and 2007 by flipping the y-axis”**:
+
+![](images/clipboard-897987768.png){width="341"}
+
+**Critiquing a data visualization:**
+
+1.  Identify the primary and secondary insights that the graphic is trying to convey.
+
+```{=html}
+<!-- -->
+```
+2.  Identify elementary perceptual tasks (e.g. comparing lengths, angles) and what is confusing or difficult to do.
+
+```{=html}
+<!-- -->
+```
+3.  Identify if it’s possible (*and* if it makes sense) to use more effective elementary perceptual tasks for the primary and secondary insights
+
+```{=html}
+<!-- -->
+```
+4.  Identify points of confusion and decide how those could be addressed (e.g. a different graphic form, rearranging components, including an introduction graph, better annotation)
+
+------------------------------------------------------------------------
+
+Ridgeline plot:
+
+Joy Division: [Unknown Pleasures](https://en.wikipedia.org/wiki/Unknown_Pleasures)
+
+------------------------------------------------------------------------

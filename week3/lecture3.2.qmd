@@ -1,0 +1,561 @@
+---
+Author: "Anna Ramji"
+Date: 2024-01-22
+---
+
+## Lecture 3.2: Visualizing distributions
+
+### **Visualizing data *distribution*?**
+
+-   visualizing the spread of a numeric variable(s)
+
+    -   histograms, density plots, ridgeline plots, box plots, violin plots
+
+**The data: bottom temperatures at Mohawk Reef**
+
+The [Santa Barbara Coastal Long Term Ecolgical Research (SBC LTER)](https://sbclter.msi.ucsb.edu/) site was established in 2000 to understand the ecology of coastal kelp forest ecosystems. A number of coastal rocky reef sites are outfitted with instrumentation that collect long-term monitoring data.
+
+![](images/clipboard-388619842.png)
+
+![](images/clipboard-1886006814.png)
+
+We’ll be exploring **bottom temperatures recorded at Mohawk Reef**, a near-shore rocky reef and one of the Santa Barbara Coastal (SBC) LTER research sites.
+
+### Data wrangling
+
+Data are imported directly from the [EDI Data Portal](https://portal.edirepository.org/nis/home.jsp). Explore the [metadata package](https://portal.edirepository.org/nis/mapbrowse?scope=knb-lter-sbc&identifier=2007) online to learn more about these data.
+
+```{r}
+#..........................load packages.........................
+library(tidyverse)
+library(chron) # datetime stuff
+library(naniar) # helps with missing data
+
+#..........................import data...........................
+mko <- read_csv("https://portal.edirepository.org/nis/dataviewer?packageid=knb-lter-sbc.2007.17&entityid=02629ecc08a536972dec021f662428aa")
+
+
+mko_clean <- mko |> 
+  # keep only necessary columns
+  select(year, month, day, decimal_time, Temp_bot) |> 
+   # create datetime column (not totally necessary for our plots, but it can helpful to know how to do this!) ----
+  unite(date, year, month, day, sep = "-",
+        remove = FALSE) |> # keeps those 3 columns in tact so we can make sure they're uniting properly
+  mutate(time = chron::times(decimal_time)) |> # takes weird decimal time into : sensical
+  # treat it as a datetime object
+  unite(date_time, date, time, sep = " ") |> 
+  
+  # take a look at the structure with str(mko_clean)
+  
+  # overwrite datetime column, coerce data type (datetime object)
+  mutate(date_time = as.POSIXct(date_time, "%Y-%m-%d %H:%M:%S", tz = "GMT"),
+         year = as.factor(year),
+         month = as.factor(month),
+         day = as.numeric(day)) |> 
+  
+  # R has a built-in vector called month.name (run this in console to see)
+  # index by value in the month column
+  mutate(month_name = as.factor(month.name[month])) |> 
+  
+  # replace 9999s with NAs ----
+# not in the read_csv line so we can preserve the raw data
+  naniar::replace_with_na(replace = list(Temp_bot = 9999)) 
+#|
+  
+#  selec
+
+
+  
+  
+
+```
+
+```{r}
+
+#..........................wrangle data..........................}
+mko_clean <- mko |>
+
+  # keep only necessary columns ----
+  select(year, month, day, decimal_time, Temp_bot, Temp_top, Temp_mid) |>
+
+  # create datetime column (not totally necessary for our plots, but it can helpful to know how to do this!) ----
+  unite(date, year, month, day, sep = "-", remove = FALSE) |>
+  mutate(time = chron::times(decimal_time)) |>
+  unite(date_time, date, time, sep = " ") |>
+
+  # coerce data types ----
+  mutate(date_time = as.POSIXct(date_time, "%Y-%m-%d %H:%M:%S", tz = "GMT"), # see <https://www.neonscience.org/resources/learning-hub/tutorials/dc-convert-date-time-posix-r> for overview of POSIXct vs POSIXlt
+         year = as.factor(year),
+         month = as.factor(month),
+         day = as.numeric(day)) |>
+
+  # add month name by indexing the built-in `month.name` vector ----
+  mutate(month_name = as.factor(month.name[month])) |>
+
+  # replace 9999s with NAs ----
+  naniar::replace_with_na(replace = list(Temp_bot = 9999, 
+                                         Temp_top = 9999, 
+                                         Temp_mid = 9999)) |>
+
+  # select/reorder desired columns ----
+  select(date_time, year, month, day, month_name, Temp_bot, Temp_mid, Temp_top)
+
+#......................explore missing data......................
+
+# counts and percentage of missing data by year ----
+see_NAs <- mko_clean |> 
+  group_by(year) |> 
+  naniar::miss_var_summary() |>
+  filter(variable == "Temp_bot")
+
+# visualize missing Temp_bot ----
+bottom <- mko_clean |> select(Temp_bot)
+missing_temps <- naniar::vis_miss(bottom)
+```
+
+## Histograms
+
+**What are they?**
+
+-   Histograms are used to represent the **distribution of a *numeric* variable(s)**, which is **cut into several bins**. The number of observations per bin is represented by the height of the bar.
+
+**Need:**
+
+-   a numeric variable with lots of values
+
+-   meaningful differences between values
+
+**Important considerations:**
+
+-   bin width (30 **bins** by default)
+
+-   too few / too many bins
+
+Avoid plotting too many groups
+
+Examples
+
+```{r}
+mko_clean |> 
+  ggplot(aes(x = Temp_bot,
+             fill = month_name)) +
+  geom_histogram()
+```
+
+issues: - alphabetical months - crazy colors - default position is stacked, not easily visually representative of bar heights
+
+Adjust position:
+
+```{r}
+mko_clean |> 
+  ggplot(aes(x = Temp_bot,
+             fill = month_name)) +
+  geom_histogram(position = "identity", alpha = 0.5)
+```
+
+-   still kooky visually
+
+<https://samanthacsik.github.io/EDS-240-data-viz/slides/week3.2-distributions-slides.html#/hist-updates>
+
+```{r}
+mko_clean |> 
+  # set month names to correct order
+  mutate(month_name = factor(month_name,
+                             levels = month.name)) |> 
+  ggplot(aes(x = Temp_bot,
+             fill = month_name)) +
+  geom_histogram(position = "identity", alpha = 0.5)
+```
+
+Facet wrap
+
+```{r}
+# original plot ----
+mko_clean |> 
+  # set month names to correct order
+  mutate(month_name = factor(month_name,
+                             levels = month.name)) |> 
+  ggplot(aes(x = Temp_bot,
+             fill = month_name)) +
+  geom_histogram(position = "identity", alpha = 0.5)
+
+
+# small multiples ----
+mko_clean |> 
+  # set month names to correct order
+  mutate(month_name = factor(month_name,
+                             levels = month.name)) |> 
+  ggplot(aes(x = Temp_bot
+             #,
+            # fill = month_name)
+            )) +
+  geom_histogram(position = "identity"
+                 #, alpha = 0.5
+                 ) +
+  facet_wrap(~month_name)
+
+# color is distracting so we should move it. It's doing nothing for us here (repetitive information)
+
+
+# fewer groups, adjust colors ----
+mko_clean |> 
+  # set month names to correct order
+  mutate(month_name = factor(month_name, levels = month.name)) |> 
+  filter(month_name %in% c("April", "June", "October")) |> 
+  
+  ggplot(aes(x = Temp_bot,
+             fill = month_name)) +
+  geom_histogram(position = "identity",
+                 alpha = 0.5,
+                 color = "black") + # outline in black
+  scale_fill_manual(values = c("#2C5374", "#ADD8E6", "#8B3A3A"))  # custom colors
+
+# modify bin width ----
+mko_clean |> 
+  # set month names to correct order
+  mutate(month_name = factor(month_name, levels = month.name)) |> 
+  filter(month_name %in% c("April", "June", "October")) |> 
+  
+  ggplot(aes(x = Temp_bot, fill = month_name)) +
+  geom_histogram(position = "identity", alpha = 0.5,
+                 color = "black",
+                 binwidth = 1) + # try not to lose the shape of our distribution
+  scale_fill_manual(values = c("#2C5374", "#ADD8E6", "#8B3A3A"))  # custom colors
+
+```
+
+## Density plots
+
+**What are they?**
+
+-   A smoothed version of a histogram. Density plots are representations of the **distribution of a *numeric* variable(s)**, which uses a [kernel density estimate](https://chemicalstatistician.wordpress.com/2013/06/09/exploratory-data-analysis-kernel-density-estimation-in-r-on-ozone-pollution-data-in-new-york-and-ozonopolis/) (KDE) to show the [probability density function](https://en.wikipedia.org/wiki/Probability_density_function) of the variable. **The area under each curve is equal to 1.** *Use a density plot when you are most concerned with the shape of the distribution.*
+
+    -   good for showing shape
+
+    -   bandwidth adjusts smoothness of curve, doesn't have binwidth
+
+**Need:**
+
+-   a numeric variable with lots of values
+
+**Important considerations:**
+
+-   useful when you want to visualize the shape of your data (not affected by bin number)
+
+-   does not indicate sample size
+
+-   can be misleading with small data sets
+
+-   band width, which affects level of smoothing
+
+**Density plots - avoid plotting too many groups**
+
+Similar to the histogram, twelve groups (`month_name`) is too many groups! Consider small multiples (using `facet_wrap()`) if you want to keep all groups.
+
+```{r}
+# original plot ----
+mko_clean |> 
+  # set month names to correct order
+  mutate(month_name = factor(month_name,
+                             levels = month.name)) |> 
+  ggplot(aes(x = Temp_bot, fill = month_name)) +
+  geom_density(alpha = 0.5)
+
+# fewer groups, adjust colors ----
+mko_clean |> 
+  # set month names to correct order
+  mutate(month_name = factor(month_name, levels = month.name)) |> 
+  filter(month_name %in% c("April", "June", "October")) |> 
+  ggplot(aes(x = Temp_bot,
+             fill = month_name)) +
+  geom_density(alpha = 0.5,
+               adjust = 1/2) + # adjust smoothness
+  # more than 1 = more smooth, less = less smooth
+  scale_fill_manual(values = c("#2C5374", "#ADD8E6", "#8B3A3A"))  # custom colors
+```
+
+**An important distinction**
+
+**Histograms** show us the **counts** (frequency) of values in each range (bin), represented by the height of the bars.
+
+**Density plots** show the **proportion** of values in each range (area under the curve equal 1; peaks indicate where more values are concentrated, but it does *not* tell us anything about the *the number* of observations).
+
+We’ll use some dummy data to demonstrate how this differs visually:
+
+```{r}
+dummy_data <- data.frame(value = c(rnorm(n = 100, mean = 5),
+                                   rnorm(n = 200, mean = 10)),
+                         group = rep(c("A", "B"),
+                                     times = c(100, 200)))
+```
+
+Here, we have two groups (`A`, `B`) of values which are normally distributed, but with different means. Group `A` also has a smaller sample size (100) than group `B` (200).
+
+It’s easy to see that group `B` has a larger sample size than group `A` when looking at our histogram. Additionally, we can get a good sense of our data distribution. *But* what happens when you reduce the number of `bins` (e.g. set `bins = 4`)?
+
+```{r}
+ggplot(dummy_data, aes(x = value, fill = group)) +
+  geom_histogram(position = "identity", # makes all bars sit on the x axis
+                 alpha = 0.7) +
+  geom_rug(aes(color = group), alpha = 0.7)
+```
+
+(Rug plots added as an alternative way to visualize the data distribution and also as an indicator of sample size.)
+
+We lose information about sample size in our density plot (note that both curves are \~the same height, despite group `B` having 2x as many observations). However, they’re great for visualizing the shape of our distributions since they are unaffected by the number of bins.
+
+```{r}
+ggplot(dummy_data, aes(x = value, fill = group)) +
+  geom_density(alpha = 0.7) +
+  geom_rug(aes(color = group), alpha = 0.7)
+```
+
+-   height of the curves are almost identical, with A being higher than B
+
+-   tell us about the general shape of the distribution
+
+### **Combining geoms - histogram & density plot**
+
+Overlaying a histogram and density plot requires scaling down the histogram to match the density curve scale. Adding `y = after_stat(density)` within the `aes()` function rescales the histogram counts so that bar areas integrate to 1:
+
+```{r}
+ggplot(mko_clean, aes(x = Temp_bot, y = after_stat(density))) + # scale down hist to match density curve
+  geom_histogram(fill = "gray", color = "black", alpha = 0.75) +
+  geom_density(size = 1) 
+
+```
+
+**Scaled density plots for comparing groups to a whole**
+
+In a normal density plot, the area under the curve(s) is equal to 1. **In a scaled density plot, the area under the curve reflects the number of observations for each group.**
+
+We can use scaled density plots to compare individual group distributions to the total distribution. We’ll do so using the `palmerpenguins::penguins` data set.
+
+```{r}
+library(palmerpenguins)
+# use `after_stat(count)` to plot density of observations ----
+ggplot(penguins, aes(x = body_mass_g, y = after_stat(count))) +
+ 
+  # plot full distribution curve with label "all penguins"; remove 'species' col so that this doesn't get faceted later on ----
+  geom_density(data = select(penguins, -species), 
+               aes(fill = "all penguins"), color = "transparent") +
+  
+  # plot second curve with label "species" ----
+  geom_density(aes(fill = "species"), color = "transparent") +
+  
+  # facet wrap by species ----
+  facet_wrap(~species, nrow = 1) +
+  
+  # update colors, x-axis label, legend position ----
+  scale_fill_manual(values = c("grey","#0C8346"), name = NULL) +
+  labs(x = "Body Mass (g)") +
+  theme(legend.position = "top")
+```
+
+## **Ridgeline plots - `{ggridges}`**
+
+**What are they?**
+
+-   Ridgeline plots show the **distribution of a *numeric* variable** for **multiple groups**.
+
+**Need:**
+
+-   a numeric variable with lots of values
+
+**Important considerations:**
+
+-   work best when you have \> 6 groups
+
+-   works well when there is a clear pattern in the result (e.g. if there is an obvious ranking in groups) and / or when visualizing changes in distributions over time or space
+
+![](images/clipboard-733043739.png)
+
+**Ridgeline plots - good for multiple groups**
+
+The [`{ggridges}` package](https://wilkelab.org/ggridges/) has a number of different geoms for creating ridgeline plots that work well for data sets with larger group numbers (e.g. months). Two great geoms to explore (to start):
+
+`geom_density_ridges()` to create a basic ridgeline plot:
+
+```{r}
+ggplot(mko_clean, aes(x = Temp_bot, y = month_name)) +
+  ggridges::geom_density_ridges()
+```
+
+`geom_density_ridges_gradient()` to fill with a color gradient:
+
+```{r}
+ggplot(mko_clean, aes(x = Temp_bot, y = month_name,
+                      # Sam mentioned underlying statistical transformation 
+                      fill = after_stat(x))) +
+  ggridges::geom_density_ridges_gradient() +
+  scale_fill_gradientn(colors = c("#2C5374","#849BB4", "#D9E7EC", "#EF8080", "#8B3A3A"))
+```
+
+### **Ridgeline plots - adjustments**
+
+#### **Group Order:**
+
+Order by month (ideal, since months have an inherent order):
+
+```{r}
+ggplot(mko_clean, aes(x = Temp_bot, y = month_name, fill = after_stat(x))) +
+  ggridges::geom_density_ridges_gradient() +
+  scale_y_discrete(limits = rev(month.name)) +
+  scale_fill_gradientn(colors = c("#2C5374","#849BB4", "#D9E7EC", "#EF8080", "#8B3A3A"))
+```
+
+Order by mean or median (makes more sense when you have unordered groups):
+
+```{r}
+mko_clean |> 
+  mutate(month_name = fct_reorder(month_name, Temp_bot, .fun = mean)) |> 
+  ggplot(mko_clean, mapping = aes(x = Temp_bot, y = month_name, fill = after_stat(x))) +
+  ggridges::geom_density_ridges_gradient() +
+  scale_fill_gradientn(colors = c("#2C5374","#849BB4", "#D9E7EC", "#EF8080", "#8B3A3A"))
+```
+
+#### **Overlaps & tails**
+
+`rel_min_height` adjusts trailing tails and `scale` controls the extent to which the different densities overlap)
+
+```{r}
+ggplot(mko_clean, aes(x = Temp_bot, y = month_name, fill = after_stat(x))) +
+  ggridges::geom_density_ridges_gradient(rel_min_height = 0.01, scale = 3) +
+  # based on built-in month vector, reverse
+  scale_y_discrete(limits = rev(month.name)) +
+  scale_fill_gradientn(colors = c("#2C5374","#849BB4", "#D9E7EC", "#EF8080", "#8B3A3A"))
+
+```
+
+#### **Quantiles**
+
+Include a median line by using the `stat_density_ridges()` geom and setting the number of `quantiles` to `2`:
+
+```{r}
+ggplot(mko_clean, aes(x = Temp_bot, y = month_name)) +
+  ggridges::stat_density_ridges(rel_min_height = 0.01, # cuts our tails, num from documentation
+                                scale = 3, 
+                                quantile_lines = TRUE, quantiles = 2) +
+  scale_y_discrete(limits = rev(month.name))
+
+```
+
+#### Jitter raw data
+
+Visualize the raw data underlying the density ridges (since our temperature data is too large (\>473,000 rows), so we’ll use the `palmerpenguins::penguins` data set to demo):
+
+Jittered points:
+
+```{r}
+ggplot(penguins, aes(x = body_mass_g, y = species)) +
+  ggridges::geom_density_ridges(jittered_points = TRUE, 
+                                alpha = 0.5, point_size = 0.5)
+```
+
+Raincloud plot:
+
+```{r}
+ggplot(penguins, aes(x = body_mass_g, y = species)) +
+  ggridges::geom_density_ridges(jittered_points = TRUE, alpha = 0.5, 
+                                point_size = 0.5, scale = 0.6,
+                                position = "raincloud")
+```
+
+## **Box plots - `ggplot2::geom_boxplot()`**
+
+**What are they?**
+
+-   Box plots **summarize the distribution of a numeric variable for one or several groups**.
+
+**Need:**
+
+-   a numeric variable, often with multiple groups
+
+**Important considerations:**
+
+-   box plots *summarize* data, meaning we can’t see the underlying shape of the distribution or sample size
+
+-   add jittered points on top, or if large sample size, consider a violin plot
+
+![](images/clipboard-4199828726.png)
+
+**Box plots - good for multiple groups**
+
+Box plots are great for a few to multiple groups (too many boxes just results in a lot of information to synthesize, as a viewer). If your x-axis text is long, consider flipping your axes to make them less crunched:
+
+```{r}
+ggplot(mko_clean, aes(x = month_name, y = Temp_bot)) +
+  geom_boxplot() +
+  # reverse proper month order
+  scale_x_discrete(limits = rev(month.name)) +
+  coord_flip() # horizontal bars instead of vertical 
+
+```
+
+### **Box plots - adjustments**
+
+<https://samanthacsik.github.io/EDS-240-data-viz/slides/week3.2-distributions-slides.html#/boxplot-adjustments>
+
+#### Outliers
+
+You can modify outlier aesthetics inside `geom_boxplot()`:
+
+```{r}
+ggplot(mko_clean, aes(x = month_name, y = Temp_bot)) +
+  geom_boxplot(outlier.color = "purple", outlier.shape = "circle open", outlier.size = 5) +
+  scale_x_discrete(limits = rev(month.name)) +
+  coord_flip()
+```
+
+#### Highlight a group
+
+Highlight a group of interest – one easy way to do so is by using the [`{gghighlight}` package](https://yutannihilation.github.io/gghighlight/index.html). Here, we specify a specific month (`"October"`) to highlight:
+
+```{r}
+mko_clean |> 
+  ggplot(aes(x = month_name, y = Temp_bot, fill = month_name)) +
+  geom_boxplot() +
+  scale_x_discrete(limits = rev(month.name)) +
+  # highlight October. You could also highlight based on set conditions
+  gghighlight::gghighlight(month_name == "October") +
+  coord_flip() +
+  theme(legend.position = "none")
+```
+
+#### Jitter raw data
+
+Since box plots hide sample size, consider overlaying raw data points using `geom_jitter()` (since our temperature data is too large (\>473,000 rows), we’ll use the `palmerpenguins::penguins` data set to demo):
+
+NOTE: Be sure to remove outliers, since plotting raw data will result in those data points being a second time:
+
+```{r}
+ggplot(na.omit(penguins), aes(x = species, y = body_mass_g)) +
+  geom_boxplot(outlier.shape = NA) +
+  geom_jitter(alpha = 0.5, width = 0.2) +
+  coord_flip()
+```
+
+#### Dodged Groups
+
+You may have data where you want to include an additional grouping variable – for example, let’s say we want to plot penguin body masses by species *and* year. We’ll need to at least `dodge` our overlaid points so that they sit on top of the correct box. Preferably, we both `jitter` *and* `dodge` our points:
+
+```{r}
+penguins |> 
+  mutate(year = as.factor(year)) |> 
+  ggplot(aes(x = species, y = body_mass_g, color = year)) +
+  geom_boxplot(outlier.shape = NA) +
+  geom_point(alpha = 0.5, position = position_jitterdodge(jitter.width = 0.2)) +
+  coord_flip()
+
+```
+
+#### Overlay Beeswarm
+
+Similar to overlaying the raw jittered data points, we can combine our box plot with a **beeswarm plot** using `{ggbeeswarm}`. Beeswarm plots visualize the density of data at each point, as well as arrange points that would normally overlap so that they fall next to one another instead. Consider using a standalone beeswarm plot here as well! We’ll again use the `palmerpenguins::penguins` data set to demo:
+
+```{r}
+ggplot(na.omit(penguins), aes(x = species, y = body_mass_g)) +
+  geom_boxplot(outlier.shape = NA) +
+  ggbeeswarm::geom_beeswarm(size = 1) +
+  coord_flip()
+```
