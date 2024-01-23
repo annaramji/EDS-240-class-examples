@@ -1,0 +1,129 @@
+---
+Author: "Anna Ramji"
+Date: 2024-01-22
+---
+
+# Lecture 3.3: Visualizing Evolution
+
+**Visualizing data *evolution*?**
+
+Visualizing the change in a **numeric variable** over some unit of time.
+
+## Roadmap:
+
+In this lesson, we’ll be exploring two primary chart types:
+
+1\. line graphs
+
+-   avoiding spaghetti plots
+
+-   cutting the y-axis
+
+-   aspect ratio
+
+2\. area charts
+
+-   1 vs. multiple groups
+
+-   how to interpret them
+
+-   stacked vs. proportional stacked area chart
+
+-   considerations
+
+## **The data: Lyme disease**
+
+Lyme disease has been a nationally notifiable condition in the United States since 1991. Reports of Lyme disease are collected and verified by local and state health departments, anonymized by the [National Notifiable Diseases Surveillance System](https://www.cdc.gov/nndss/index.html) (NNDSS), then shared with [Centers for Disease Control and Prevention](https://www.cdc.gov/) (CDC). The CDC has developed a public use data set for [download](https://www.cdc.gov/lyme/stats/survfaq.html) to facilitate the public health and research community’s access to NNDSS data on Lyme disease.
+
+Using the publicly-available CDC data on Lyme disease and population estimates from the [US Census Bureau](https://www.census.gov/) (via the [`{tidycensus}` package](https://samanthacsik.github.io/EDS-240-data-viz/slides/week3.3-evolution-slides.html)), we’ll explore **changes in Lyme disease incidence (cases/100k people) over time**, by state.
+
+### **`{tidycensus}` for accessing US population data**
+
+The [`{tidycensus}` package](https://walker-data.com/tidycensus/) allows users to interface with a select number of the US Census Bureau’s data APIs and return tidyverse-ready data frames.
+
+Using `{tidycensus}` requires that you first have an API key. **Be sure to follow the Pre-Course setup [instructions for requesting and activating your key](https://samanthacsik.github.io/EDS-240-data-viz/course-materials/week3.html#request-a-us-census-bureau-api-key) before proceeding.**
+
+## Data wrangling
+
+See the [online documentation](https://walker-data.com/tidycensus/articles/other-datasets.html#:~:text=Population%20estimates%20are%20available%20in,%22%20%2C%20and%20%22characteristics%22%20.) for more information on downloading and parsing population data using the `{tidycensus}` package.
+
+```{r setup}
+#.........................load libraries.........................
+library(tidycensus)
+library(tidyverse)
+library(janitor)
+library(gghighlight)
+
+#.........................source API key.........................
+source(here::here("week3", "KEYS.R"))
+census_api_key(censusKEY)
+
+#..........................import data...........................
+lyme <- read_csv(here::here("week3", "data", "LD-Case-Counts-by-County-01-20.csv"))
+```
+
+## Wrangle
+
+```{r wrangle}
+# cleaning and wrangling lyme data ----
+lyme_clean <- lyme |> 
+  
+  # make column names lower_snake_case
+  janitor::clean_names() |> 
+  
+  # rename columns, new_name = old_name
+  rename(city = ctyname, state = stname, status = ststatus) |> 
+  
+  # pivot wide to longer
+  pivot_longer(cols = 6:25, 
+               names_to = "city_year",
+               values_to = "reported_cases") |> 
+  
+  # remove "cases" from the year & coerce from character to factor
+  mutate(year = str_remove(city_year, pattern = "cases"),
+         year = as.factor(year)) |> 
+  
+  # select necessary columns
+  select(year, city, state, status, reported_cases)
+
+# head(lyme_clean)
+
+#................calculate total cases per state.................
+
+lyme_by_state <- lyme_clean |> 
+  group_by(year, state) |> 
+  summarize(total_cases = sum(reported_cases))
+  
+```
+
+## Request / wrangle population data
+
+```{r}
+#...................get pop estimates by state...................
+us_state_pop <- get_estimates(geography = "state", # level of data
+                              # product you want to receive (population estimates)
+                              product = "population", 
+                              state = NULL,
+                              # select year
+                              year = 2019
+                              ) |> 
+  filter(variable == "POP") |> 
+  select(state = NAME, population = value)
+
+#........................write data to csv.......................
+# optional, but recommended in case you want to work offline, the API is down, etc. (you can then read in your saved data file rather than run the above code)
+# write_csv(us_state_pop, file = here::here("week3", "data", "us_state_pop.csv"))
+
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+##                            join lyme & pop dfs                           ----
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+lyme_pop <- left_join(lyme_by_state, us_state_pop) |> 
+  # add col with num of 100k people per state ----
+  mutate(pop100k = population/100000) |> 
+  
+  # calculate num cases per 100k people (common way of reporting disease incidence) ----
+  mutate(cases_per100k = total_cases/pop100k) 
+  
+```
+
