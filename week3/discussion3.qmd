@@ -1,0 +1,191 @@
+---
+title: "EDS 240: Discussion 3"
+author: "Anna Ramji"
+date: 2024-01-24
+---
+
+Notes:
+
+Histogram:
+
+-   don't group variables by very fine or large groupings (bin size, width), careful of how that impacts the shape of our data (distribution curve)
+
+Density plots:
+
+-   Density is proportional to the data found in each of the different categories
+
+-   What percentage of the data is found at each point on the x axis (value-by-value basis, ex. value for the density at each body mass g point)
+
+-   What does that cause for the x axis? Not as manipulable as in the histogram.
+
+-   It shows you a more accurate depiction of how your data is spread
+
+-   example of showing histogram and a density plot overlaid with each other, rug map at the bottom: count as one y-axis, density as the other
+
+Choice between the two depends on what you're trying to accomplish
+
+Ridgeline plots
+
+-   trend over time
+
+-   clarify overlaps (helpful with many variables)
+
+Box Plots
+
+-   median shows 50th percentile
+
+-   doesn't show important details: density of the data, not showing your points or where they aggregate. Use violin plot (or jitter) to show where the points aggregate along the distribution of that dataset as a whole
+
+-   violin + box plot: shows median, density, spread of data points
+
+Goal for today:
+
+-   recreate Sam's plot
+
+![](images/clipboard-2211228080.png)
+
+Import required packages
+
+```{r}
+library(tidyverse)
+library(ggpubr)
+library(cowplot)
+```
+
+Read in data
+
+```{r}
+# accessing the Tidy Tuesday data from July 20th, 2021
+tuesdata <- tidytuesdayR::tt_load('2021-07-20')
+
+# saving the drought variable from tidy Tuesday as "drought"
+drought <- tuesdata$drought
+```
+
+Exercise 1: Make any kind of distribution plot
+
+
+```{r}
+head(drought)
+
+# select columns of interest
+
+drought_subset <- drought |> 
+  select(state_abb, valid_start, valid_end, drought_lvl) |> 
+  mutate(drought_lvl_fct =  factor(drought_lvl))
+
+
+drought_subset |> ggplot() +
+  ggridges::geom_density_line(aes(x = drought_lvl), color = "navy", fill = "cornflowerblue") +
+  theme_minimal()
+
+drought_subset |> ggplot(aes(x = drought_lvl, y = state_abb)) +
+  ggridges::geom_density_ridges_gradient( color = "navy", fill = "cornflowerblue") +
+  theme_minimal()
+
+```
+
+
+```{r}
+ggplot(drought, aes(x = state_abb, y = drought_lvl,
+                      # color by x-variable and will be dictated by the gradient later set
+                      fill = after_stat(x))) +
+  # call ridges plot, and set how long tails of data will show
+  ggridges::geom_density_ridges_gradient(rel_min_height = 0.01,
+                                         # sets overlap of ridges, higher number = more overlap
+                                         scale = 3)
+```
+
+```{r sams-code}
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+##                                    setup                                 ----
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+#..........................load packages.........................
+#library(tidyverse)
+
+#..........................import data...........................
+#tuesdata <- tidytuesdayR::tt_load('2021-07-20')
+#drought <- tuesdata$drought
+
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+##                            wrangle drought data                          ----
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+drought_clean <- drought |>
+
+  # select cols of interest & update names as needed ----
+# subset so we're not working with too much data (better for processing speed, rendering time)
+  select(date = valid_start, state_abb, drought_lvl, area_pct) |> 
+
+  # add year, month & day cols using {lubridate} fxns ----
+# lets us add date pieces for grouping, plotting
+  mutate(year = year(date),
+         # adds character abbreviation of month
+         month = month(date, label = TRUE, abbr = TRUE),
+         day = day(date)) |>
+
+  # add drought level conditions names ----
+# as factor so that we can order by factor level
+  mutate(drought_lvl_long = factor(drought_lvl,
+                            levels = c("D4", "D3", "D2", "D1","D0", "None"),
+                            # give context to readers about drought level meanings
+                            labels = c("(D4) Exceptional", "(D3) Extreme",
+                                       "(D2) Severe", "(D1) Moderate", "(D0) Abnormally Dry", 
+                                       "No Drought"))) |>
+  
+  # reorder cols ----
+  select(date, year, month, day, state_abb, drought_lvl, drought_lvl_long, area_pct)
+
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+##       create stacked area plot of CA drought conditions through time     ----
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+drought_clean |> 
+  
+  # remove drought_lvl "None" & filter for just CA ----
+  filter(drought_lvl != "None",
+         state_abb == "CA") |> 
+  
+  # create ggplot ----
+  ggplot(mapping = aes(x = date, y = area_pct, fill = drought_lvl_long)) +
+  
+  # reverse order of groups so level D4 is closest to x-axis ----
+  geom_area(position = position_stack(reverse = TRUE)) +
+  
+  # update colors to match US Drought Monitor (colors selected using ColorPick Eyedropper from original USDM data viz) ----
+ # visually conveys extremity / severity of drought. The more red = the more dry it is.
+  scale_fill_manual(values = c("#853904", "#FF0000", "#FFC100", "#FFD965", "#FFFF00")) +
+  
+  # set x-axis breaks & remove padding between data and x-axis ----
+  scale_x_date(breaks = scales::breaks_pretty(n = 10), # show 10 year ticks on x axis
+               expand = c(0, 0)) +
+
+  # set y-axis breaks & convert values to percentages & & remove padding between data and y-axis----
+  scale_y_continuous(breaks = seq(0, 100, by = 10),
+                     labels = scales::label_percent(scale = 1),
+                     expand = c(0, 0)) +
+  
+  # add title ----
+  labs(title = "Drought area in California") 
+
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+##            BONUS: using {geofacet} to plot data for all states           ----
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+#......remove HI & AK (no data) and also DC from preset grid.....
+mygrid <- geofacet::us_state_grid1 |>
+  filter(!code %in% c("DC", "HI", "AK"))
+
+#..............................plot..............................
+
+# NOTE: this takes a minute to render!
+
+drought_clean |> 
+  filter(drought_lvl != "None") |> 
+  ggplot(aes(x = date, y = area_pct, fill = drought_lvl_long)) +
+  geom_area(position = position_stack(reverse = TRUE)) +
+  geofacet::facet_geo(~state_abb, grid = mygrid) +
+  scale_fill_manual(values = c("#853904", "#FF0000", "#FFC100", "#FFD965", "#FFFF00"))
+```
+
