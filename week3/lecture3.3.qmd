@@ -127,3 +127,113 @@ lyme_pop <- left_join(lyme_by_state, us_state_pop) |>
   
 ```
 
+## Line plots
+
+**Line plots show the evolution of 1+ numeric variables**
+
+Line graphs display the **evolution of one or several *numeric* variables**. They are similar to scatter plots, but the measurement points are **ordered** (typically by their x-axis value) and joined with straight line segments. They are often used to visualize a trend in data over intervals of time. For example, changes in Lyme disease incidence (# cases / 100k people) from 2010 - 2020, by state:
+
+### Basic line plot
+
+```{r basic-line-plot}
+lyme_pop |> 
+  filter(year %in% c(2010:2020)) |> 
+  ggplot(aes(x = year, y = cases_per100k,
+             group = state) # without this, we get a crazy plot with vertical lines -- we need to tell geom_line how we want to group our data / what to group it by 
+         ) + 
+  geom_line() 
+#+
+ # theme_bw()
+```
+
+Adding points with geom_point
+
+```{r}
+lyme_pop |> 
+  filter(year %in% c(2010:2020)) |> 
+  ggplot(aes(x = year, y = cases_per100k, group = state)) + 
+  geom_line() +
+  geom_point()
+```
+
+**“Spaghetti plots” are hard to read**
+
+A line plot with many lines displayed together can be hard to read / overwhelming to interpret. Consider highlighting a group(s) of interest (the [`{gghighlight}` package](https://yutannihilation.github.io/gghighlight/) comes in handy):
+
+E.g. I’m interested in how Lyme disease in New Jersey compares to other states.
+
+```{r}
+lyme_pop |> 
+  filter(year %in% c(2010:2020)) |> 
+  ggplot(aes(x = year, y = cases_per100k,
+             group = state,
+             color = state)) + 
+  geom_line() +
+  gghighlight::gghighlight(state == "New Jersey")
+```
+
+E.g. I’m interested in states where Lyme disease incidence is (or at one point was) \> 100 cases / 100k people.
+
+```{r}
+# highlight based on a conditional
+lyme_pop |> 
+  filter(year %in% c(2010:2020)) |> 
+  ggplot(aes(x = year, y = cases_per100k,
+             group = state,
+             color = state)) + 
+  geom_line() +
+  gghighlight::gghighlight(max(cases_per100k) > 100)
+
+```
+
+**It’s okay to cut the y-axis of line graphs**
+
+Line graphs encode data **by position** and **not length** (e.g. as in the height of a bar graph), therefore, you can choose to include the 0 origin only if it makes sense.
+
+Lyme disease incidence from 2013 - 2019\
+(cut y-axis = default)
+
+```{r}
+
+lyme_pop |> 
+  filter(year %in% c(2010:2020)) |> 
+  filter(state == "Vermont") |> 
+  ggplot(aes(x = year, y = cases_per100k,
+             group = state,
+             color = state)) + 
+  geom_line() 
+```
+
+Lyme disease incidence from 2013 - 2019\
+(force y-axis origin at 0)
+
+```{r}
+lyme_pop |> 
+  filter(year %in% c(2010:2020)) |> 
+  filter(state == "Vermont") |> 
+  ggplot(aes(x = year, y = cases_per100k,
+             group = state,
+             color = state)) + 
+  geom_line() +
+  scale_y_continuous(limits = c(0, NA))
+```
+
+### **It’s okay to cut the y-axis of line graphs**
+
+------------------------------------------------------------------------
+
+*Do not* start the y-axis at 0 if the **range of data is small but the distance from the bottom of the range to zero is large**. For example
+
+(DOW Opening example from Megan Hall's statistical graphics & visualization course lecture 5 slides)
+
+<https://cmu-36315.netlify.app/>
+
+<https://cmu-36315.netlify.app/slides/36-315_summer2021_lec5#1>
+
+Do *not* start the y-axis at 0 if the **relationship to zero is insignificant**.
+
+### Aspect ratio affects perception of slope
+
+The aspect ratio is the **height:width ratio of a graph**. The **larger the aspect ratio, the steeper changes appear**, which may cause readers to **interpret changes as more important**. The **smaller the aspect ratio, the flatter the line** which may cause readers to **interpret changes as small / insignificant**.
+
+There’s **no exact rule** for what aspect ratio to use for a given graphic (but see [Cleveland et al. 1988](https://www.jstor.org/stable/2288843) to read about the “banking to 45 degrees” rule) – it depends on the nature of the variable and your goal with the visualization. *However* it’s important to keep mind that **manipulating the aspect ratio can mislead readers, and so you should do so carefully**.
