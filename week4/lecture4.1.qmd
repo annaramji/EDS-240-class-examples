@@ -1,0 +1,433 @@
+---
+author: "Anna Ramji"
+title: "Lecture 4.1"
+date: 2024-01-29
+---
+
+Install required packages as needed
+
+```{r , eval=FALSE}
+install.packages("ggalt") # extra coordinate systems, geoms, statistical transformations, scales and fonts for 'ggplot2' (includes `geom_lollipop()`)
+install.packages("ggExtra") # {ggplot2} extension2222 which can be used to add marginal histograms/boxplots/density plots to ggplot2 scatterplots
+install.packages("ggdensity") # {ggplot2} extension providing more interpretable visualizations of density estimates based on highest density regions (HDRs)
+
+```
+
+> In lecture 4.1, we’ll be exploring income data from the Bureau of Labor Statistics and the Census Bureau, which has been moderately [pre-processed](https://github.com/rfordatascience/tidytuesday/tree/master/data/2019/2019-03-05#spoilers---cleaning-script) by TidyTuesday organizers for the [March 5, 2021 data set](https://github.com/rfordatascience/tidytuesday/tree/master/data/2019/2019-03-05).
+>
+> Please review the necessary background information (see [slide 4](https://samanthacsik.github.io/EDS-240-data-viz/slides/week4.1-rankings-slides.html#/job-data)) *and* walk through the data wrangling code on [slide 5](https://samanthacsik.github.io/EDS-240-data-viz/slides/week4.1-rankings-slides.html#/data-wrangling) ahead of class. Come prepared with any questions you may have about the code – we’ll set aside \~10 minutes to discuss before jumping into building our data visualizations.
+>
+> Be sure to check out the [data dictionary](https://github.com/rfordatascience/tidytuesday/tree/master/data/2019/2019-03-05#data-dictionary-1) on the [TidyTuesday repo](https://github.com/rfordatascience/tidytuesday/tree/master/data/2019/2019-03-05) for information about each variable in this data set.
+
+## Data Wrangling
+
+```{r data-wrangling}
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+##                                    setup                                 ----
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+#..........................load packages.........................
+library(tidyverse)
+
+#..........................import data...........................
+jobs <- read_csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2019/2019-03-05/jobs_gender.csv")
+
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+##                                wrangle data                              ----
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+jobs_clean <- jobs |> 
+  
+  # add cols (needed for dumbbell plot) ----
+  mutate(percent_male = 100 - percent_female, # % of females within each industry was already included
+         difference_earnings = total_earnings_male - total_earnings_female) |>  # diff in earnings between M & F
+  
+  # rearrange columns ----
+  relocate(year, major_category, minor_category, occupation,
+          total_workers, workers_male, workers_female,
+          percent_male, percent_female,
+          total_earnings, total_earnings_male, total_earnings_female, difference_earnings,
+          wage_percent_of_male) |> 
+  
+  # drop rows with missing earning data ----
+  drop_na(total_earnings_male, total_earnings_female) |> 
+  
+  # make occupation a factor ----
+  mutate(occupation = as.factor(occupation)) |> 
+  
+  # ---- this next step is for creating our dumbbell plots ----
+
+  # classify jobs by percentage male or female ----
+  mutate(group_label = case_when(
+    percent_female >= 75 ~ "Occupations that are 75%+ female",
+    percent_female >= 45 & percent_female <= 55 ~ "Occupations that are 45-55% female",
+    percent_male >= 75 ~ "Occupations that are 75%+ male"
+  )) 
+```
+
+## **Bar & lollipop plots to visualize rankings**
+
+Let’s first explore the top ten occupations with the highest median earnings in 2016 (full-time workers \> 16 years old). The heights of both the bars and lollipops represent the total estimated median earnings (`total_earnings`).
+
+```{r}
+# bar plot (using geom_col())
+jobs_clean |> 
+  filter(year == 2016) |> 
+  # new function! slice_max()
+  # selects the smallest or largest values from variables you specify
+  slice_max(order_by = total_earnings, n = 10) |> # a lot of minor categories in the same major categories (e.x.: Healthcare Practicioners and Technical)
+  ggplot(aes(x = occupation, y = total_earnings)) +
+  # geom bar only takes an x-axis aesthetic, returns counts of those.
+  # geom col -- height of our bars represents the value of total earnings at each occupation
+  geom_col() 
+
+# lollipop
+jobs_clean |> 
+  filter(year == 2016) |> 
+  slice_max(order_by = total_earnings, n = 10) |> 
+  ggplot(aes(x = occupation, y = total_earnings)) +
+  ggalt::geom_lollipop()
+  
+```
+
+#### **Make space for long x-axis labels**
+
+Give those long x-axis labels some breathing room using `coord_flip()`, which flips cartesian (x,y) coordinates so that the horizontal becomes the vertical and vice versa.
+
+```{r}
+# bar plot (using geom_col())
+jobs_clean |> 
+  filter(year == 2016) |> 
+  # new function! slice_max()
+  # selects the smallest or largest values from variables you specify
+  slice_max(order_by = total_earnings, n = 10) |> # a lot of minor categories in the same major categories (e.x.: Healthcare Practicioners and Technical)
+  ggplot(aes(x = occupation, y = total_earnings)) +
+  # geom bar only takes an x-axis aesthetic, returns counts of those.
+  # geom col -- height of our bars represents the value of total earnings at each occupation
+  geom_col() +
+  coord_flip()
+
+# lollipop
+jobs_clean |> 
+  filter(year == 2016) |> 
+  slice_max(order_by = total_earnings, n = 10) |> 
+  ggplot(aes(x = occupation, y = total_earnings)) +
+  ggalt::geom_lollipop() +
+  coord_flip()
+```
+
+#### **Reordering groups helps readers derive insight**
+
+Here, we use `forcats::fct_reorder()` to reorder the levels of our x-axis variable, `occupation`, based on a numeric variable, `total_earnings` (**NOTE:** we do *not* have to reorder based on the same numeric variable that’s plotted on the y-axis; here it makes sense to do so; also see [this blog post](https://blog.albertkuo.me/post/2022-01-04-reordering-geom-col-and-geom-bar-by-count-or-value/)):
+
+```{r}
+# bar plot (using geom_col())
+jobs_clean |> 
+  filter(year == 2016) |> 
+  slice_max(order_by = total_earnings, n = 10) |> 
+  ggplot(aes(x = fct_reorder(occupation, total_earnings),
+             y = total_earnings)) +
+  geom_col() +
+  coord_flip()
+
+# lollipop
+jobs_clean |> 
+  filter(year == 2016) |> 
+  slice_max(order_by = total_earnings, n = 10) |> 
+  ggplot(aes(x = fct_reorder(occupation, total_earnings),
+             y = total_earnings)) +
+  ggalt::geom_lollipop() +
+  coord_flip()
+```
+
+#### **`{scales}`: a true label-editing hero**
+
+While we’re on the topic of making things easier to read, let’s use the [`{scales}` package](https://scales.r-lib.org/) to update our labels so that they read more like dollar values:
+
+```{r}
+# bar plot (using geom_col())
+jobs_clean |> 
+  filter(year == 2016) |> 
+  slice_max(order_by = total_earnings, n = 10) |> 
+  ggplot(aes(x = fct_reorder(occupation, total_earnings),
+             y = total_earnings)) +
+  geom_col() +
+  # use scales package to label earnings as $000k 
+  # label_currency defaults to $
+  scale_y_continuous(labels = scales::label_currency(accuracy = 1, # amount to round to
+                                                     scale = 0.001, # scalar by which we multiply our values by. Represented as ___k here, so we scale by 0.001 (thousandth)
+                                                     suffix = "k")) + # add to the end of each of my labels
+  coord_flip()
+
+# lollipop
+jobs_clean |> 
+  filter(year == 2016) |> 
+  slice_max(order_by = total_earnings, n = 10) |> 
+  ggplot(aes(x = fct_reorder(occupation, total_earnings),
+             y = total_earnings)) +
+  ggalt::geom_lollipop() +
+    # use scales package to label earnings as $000k 
+  scale_y_continuous(labels = scales::label_currency(accuracy = 1,
+                                                     scale = 0.001,
+                                                     suffix = "k")) +
+  coord_flip()
+```
+
+-   makes everything easier and more-intuitive to read!
+
+#### **Add direct labels if the exact values are important**
+
+`geom_text()` is useful for labeling plots. Here, we pair it with the `{scales}` package to format dollar values:
+
+```{r}
+# bar plot (using geom_col())
+jobs_clean |> 
+  filter(year == 2016) |> 
+  slice_max(order_by = total_earnings, n = 10) |> 
+  ggplot(aes(x = fct_reorder(occupation, total_earnings),
+             y = total_earnings)) +
+  geom_col() +
+  # use geom_text() to add direct labels 
+  geom_text(aes(label = scales::dollar(total_earnings)),
+            hjust = 1.2, # horizontal justification
+            color = "white" # update color to be legible 
+            ) + 
+  # use scales package to label earnings as $000k 
+  # label_currency defaults to $
+  scale_y_continuous(labels = scales::label_currency(accuracy = 1, # amount to round to
+                                                     scale = 0.001, # scalar by which we multiply our values by. Represented as ___k here, so we scale by 0.001 (thousandth)
+                                                     suffix = "k")) + # add to the end of each of my labels
+  coord_flip()
+
+# lollipop
+jobs_clean |> 
+  filter(year == 2016) |> 
+  slice_max(order_by = total_earnings, n = 10) |> 
+  ggplot(aes(x = fct_reorder(occupation, total_earnings),
+             y = total_earnings)) +
+  ggalt::geom_lollipop() +
+    # use geom_text() to add direct labels 
+  geom_text(aes(label = scales::dollar(total_earnings)),
+            hjust = -0.2 # horizontal justification
+            ) + 
+    # use scales package to label earnings as $000k 
+  scale_y_continuous(labels = scales::label_currency(accuracy = 1,
+                                                     scale = 0.001,
+                                                     suffix = "k"),
+                     limits = c(0, 225000)) + # set limits to show full number (shows labels on y-ax (now x-ax) in increments of 50 so it won't show 250k if you specify something under 225)
+  coord_flip()
+
+```
+
+#### **An aside: `geom_col()` vs. `geom_bar()`**
+
+**Use `geom_col()` when your data is already summarized** or you have a variable in your data set that includes y-axis values, which will map to the height of the bars. E.g. we already have a numeric variable in our data set called, `total_earnings` – those numeric values are mapped to the height of each bar in our plot.
+
+```{r}
+jobs_clean |> 
+  filter(year == 2016) |> 
+  slice_max(order_by = total_earnings, n = 10) |> 
+  ggplot(aes(x = occupation, y = total_earnings)) +
+  geom_col() +
+  coord_flip()
+```
+
+**Use `geom_bar()` if you want to ggplot to count up numbers of rows** and map those counts to the height of bars in your plot. E.g. we want to know how many occupations are included for each major category in our `jobs_gender_clean` data set (NOTE: we don’t have a `count` column in our data frame):
+
+```{r}
+ggplot(jobs_clean, aes(x = major_category)) +
+  geom_bar() + 
+  coord_flip()
+```
+
+## **Plotting 2+ groups (e.g. male vs. female earnings)**
+
+We’ll need to transform our data from wide to long format, where total earning for males and females are in the same column (we’ll name this `earnings_by_group`), and a secondary column denotes which group those earnings are associated with (`total_earnings_female`, `total_earnings_male`). Also note that because `geom_lollipop()` doesn’t accept a `position` parameter, we’ll instead use `geom_linerange()` + `geom_point()`:
+
+```{r}
+# bar plot
+jobs_clean |> 
+  filter(year == 2016) |> 
+  slice_max(order_by = total_earnings, n = 10) |> 
+  pivot_longer(cols = c(total_earnings_male, total_earnings_female),
+               names_to = "group",
+               values_to = "earnings_by_group") |> 
+  mutate(sex = str_remove(group, pattern = "total_earnings_")) |> 
+  ggplot(aes(x = fct_reorder(occupation, earnings_by_group),
+             y = earnings_by_group,
+             fill = sex)) +
+  geom_col() +
+  coord_flip()
+
+# lollipop plot ( can't use ggalt anymore! no way to separate the stacked lollipops in that one)
+
+jobs_clean |> 
+  filter(year == 2016) |> 
+  slice_max(order_by = total_earnings, n = 10) |> 
+  pivot_longer(cols = c(total_earnings_female, total_earnings_male),
+               names_to = "group", values_to = "earnings_by_group") |> 
+  mutate(sex = str_remove(group, pattern = "total_earnings_")) |> 
+  ggplot(aes(x = fct_reorder(occupation, total_earnings),
+             y = earnings_by_group,
+             color = sex)) +
+  geom_point(position = position_dodge(width = 0.5)) + # default `position = "stack"`
+  # set width to 0.5, can customize 
+  geom_linerange(aes(xmin = occupation, xmax = occupation, 
+                     ymin = 0, ymax = earnings_by_group), # automatically takes the max of this variable
+                 position = position_dodge(width = 0.5)) + # default `position = "stack"`
+  coord_flip() +
+  theme_bw() +
+  labs(x = "")
+```
+
+### **Plot groups side-by-side**
+
+Update `position = "dodge"` or `position = position_dodge()` (which allows you to specify additional arguments about how dodging occurs):
+
+```{r}
+# bar plot
+jobs_clean |> 
+  filter(year == 2016) |> 
+  slice_max(order_by = total_earnings, n = 10) |> 
+  pivot_longer(cols = c(total_earnings_male, total_earnings_female),
+               names_to = "group",
+               values_to = "earnings_by_group") |> 
+  mutate(sex = str_remove(group, pattern = "total_earnings_")) |> 
+  ggplot(aes(x = fct_reorder(occupation, earnings_by_group), y = earnings_by_group, fill = sex)) +
+  geom_col(position = position_dodge()) +
+  coord_flip()
+```
+
+### **IMPORTANT: Avoid truncated axes**
+
+The axis of a bar (or related) plot **must** start at zero
+
+Truncated axes leads viewers to perceive illustrated differences as larger or more important than they actually are (i.e. a truncation effect). [Yang et al. (2021)](https://doi.org/10.1016/j.jarmac.2020.10.002) empirically tested this effect and found that this truncation effect persisted even after viewers were taught about the effects of y-axis truncation.
+
+<https://samanthacsik.github.io/EDS-240-data-viz/slides/week4.1-rankings-slides.html#/truncated-axis>
+
+Figure 2 from Yang et al. 2021. The left-most plot without a truncated y-axis was presented to the control group of viewers. The right-most plot with a truncated y-axis was presented to the test group of viewers.
+
+Yang et al. (2021) Truncating bar graphs persistently misleads viewers. *Journal of Applied Research in Memory and Cognition* 10:2, 298-311. <https://doi.org/10.1016/j.jarmac.2020.10.002>
+
+-   differences seem much larger than if plotting everything at zero
+
+-   misleading differences
+
+### **IMPORTANT: Bar (& related) plots are for *categorical* data**
+
+Bar charts were designed for *categorical* data. but they’re often (incorrectly) used to visualize continuous data. [Weissgerber et al. (2015)](https://doi.org/10.1371/journal.pbio.1002128) cautions against this popular practice, since many different data distributions can lead to the same bar plots.
+
+Examples:
+
+-   [Figure 1](https://journals.plos.org/plosbiology/article?id=10.1371%2Fjournal.pbio.1002128#pbio-1002128-g001) from Weissgerber et al. 2015, which illustrates how many different data distributions can lead to the same bar plots
+
+    -   not a good way to visualize continuous data
+
+-   <https://samanthacsik.github.io/EDS-240-data-viz/slides/images/week4/horst-barplot.png>
+
+Our categories here are more clearly categorical, we don't have a spread of data – it's set out per sex, occupation etc.
+
+We only have those summary statistics, not raw data we could show a distribution of
+
+-   we have different categories that have a single value representing each category
+
+## **Lollipop variant: dumbbell plot**
+
+Dumbbell plots can be a really simple and intuitive way to visualize a change or difference in two sets of data points:
+
+We can make dumbbell plots using a combination of `geom_segment()` and `geom_point()`.
+
+### **Subset occupation data**
+
+Let’s say we want to explore differences in male vs. female median salaries across occupations that are female dominated (75%+ female), male dominated (75%+ male), and those that are a relatively even split (45-55% female). **Let’s first randomly select 10 occupations from each of those categories:**
+
+```{r}
+#....guarantee the same random samples each time we run code.....
+set.seed(0)
+
+#.........get 10 random jobs that are 75%+ female (2016).........
+f75 <- jobs_clean |> 
+  filter(year == 2016, group_label == "Occupations that are 75%+ female") |> 
+  slice_sample(n = 10) # random selection of 10
+
+#..........get 10 random jobs that are 75%+ male (2016)..........
+m75 <- jobs_clean |> 
+  filter(year == 2016, group_label == "Occupations that are 75%+ male") |> 
+  slice_sample(n = 10) # random selection of 10
+
+#........get 10 random jobs that are 45-55%+ female (2016).......
+f50 <- jobs_clean |> 
+  filter(year == 2016, group_label == "Occupations that are 45-55% female") |> 
+  slice_sample(n = 10) # random selection of 10
+
+#.......combine dfs & relevel factors (for plotting order).......
+subset_jobs <- rbind(f75, m75, f50) |> 
+  # setting level (factor order), first should be most female, then even split, then male-dominated
+  mutate(group_label = fct_relevel(group_label, "Occupations that are 75%+ female", 
+                                   "Occupations that are 45-55% female", "Occupations that are 75%+ male")) 
+```
+
+### **Create dumbbell plot**
+
+```{r dumbell-plot}
+# bare-basics dumbell plot
+# gonna have different aes() for each layer, so no global specification
+ggplot(data = subset_jobs) +
+  # drawing a line between the two earnings for each of these groups
+  geom_segment(aes(x = total_earnings_female, 
+                   xend = total_earnings_male,
+                   y = occupation,
+                   yend = occupation)) 
+
+# updated -- reordered occupations, added points
+# gonna have different aes() for each layer, so no global specification
+ggplot(data = subset_jobs) +
+  # drawing a line between the two earnings for each of these groups
+  geom_segment(aes(x = total_earnings_female, 
+                   xend = total_earnings_male,
+                   y = fct_reorder(occupation, total_earnings), # reorder occupation in a more logical way
+                   yend = occupation)) +
+  geom_point(aes(x = total_earnings_male,
+                 y = occupation),
+             color = "#CD93D8", size = 2) +
+  geom_point(aes(x = total_earnings_female,
+                 y = occupation),
+             color = "#6A1E99", size = 2) 
+
+# updated -- reordered occupations, added points, facet wrap by group label
+# gonna have different aes() for each layer, so no global specification
+ggplot(data = subset_jobs) +
+  # drawing a line between the two earnings for each of these groups
+  geom_segment(aes(x = total_earnings_female, 
+                   xend = total_earnings_male,
+                   y = fct_reorder(occupation, total_earnings), # reorder occupation in a more logical way
+                   yend = occupation)) +
+  geom_point(aes(x = total_earnings_male,
+                 y = occupation),
+             color = "#CD93D8", size = 2) +
+  geom_point(aes(x = total_earnings_female,
+                 y = occupation),
+             color = "#6A1E99", size = 2) +
+  facet_wrap(~group_label,
+             nrow = 3) # stack these vertically
+
+# updated -- reordered occupations, added points, facet wrap by group label
+# gonna have different aes() for each layer, so no global specification
+ggplot(data = subset_jobs) +
+  # drawing a line between the two earnings for each of these groups
+  geom_segment(aes(x = total_earnings_female, 
+                   xend = total_earnings_male,
+                   y = fct_reorder(occupation, total_earnings), # reorder occupation in a more logical way
+                   yend = occupation)) +
+  geom_point(aes(x = total_earnings_male,
+                 y = occupation),
+             color = "#CD93D8", size = 2) +
+  geom_point(aes(x = total_earnings_female,
+                 y = occupation),
+             color = "#6A1E99", size = 2) +
+  facet_wrap(~group_label,
+             nrow = 3, # stack these vertically
+             scales = "free_y") # release these from groupings that aren't a part of these facet groups
+```
+
