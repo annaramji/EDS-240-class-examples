@@ -55,3 +55,6 @@ rsconnect/
 KEYS.R
 
 *.DS_Store
+
+
+/week*/metajam.log
