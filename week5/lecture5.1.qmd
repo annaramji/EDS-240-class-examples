@@ -1,0 +1,425 @@
+---
+author: "Anna Ramji"
+date: "2024-02-05"
+title: "EDS 240: Data Viz, Lecture 5.1"
+---
+
+# Lecture 5.1: *What makes a good data viz?*
+
+Choosing the right graphic form is just the first step! It’s important to consider how you can enhance your visualization by:
+
+-   applying pre-made and custom color palettes
+
+-   updating fonts
+
+-   adding annotations
+
+-   fine-tuning themes
+
+-   centering our primary message
+
+## Rules & Best Practices for Data Viz
+
+Consider:
+
+1.  **data-ink ratio** (less is more, within reason)
+
+2.  how to **reduce eye movement** and **improve readability / interpretability** (e.g. through alternative legend positions, direct annotations)
+
+3.  putting things **in context**
+
+4.  how to **draw the main attention** to the most **important info**
+
+5.  **consistent** use of colors, spacing, typefaces, weights
+
+6.  **typeface / font choices** and how they affect both readability *and* audience emotions and perceptions
+
+7.  using **visual hierarchy** to guide the reader
+
+8.  **color choices** (and making sure that they’re **colorblindness-friendly**)
+
+9.  **centers the people and communities** represented in your data
+
+10. including **alt text**
+
+The above should *always be considered* in your design process, but *may not always be necessary*
+
+We'll cover the first 5 in this notebook.
+
+## Simplify plots to reduce eye movement & improve readability / interpretability
+
+### **Data-Ink ratio: remove non-data ink**
+
+The [Data-Ink ratio](https://infovis-wiki.net/wiki/Data-Ink_Ratio) was introduced by Edward Tufte ([1983](https://faculty.salisbury.edu/~jtanderson/teaching/cosc311/fa21/files/tufte.pdf)) and argues that **non-data-ink** (i.e. ink used for for everything *except* the presentation of data itself) **should be removed wherever possible**.
+
+-   Data-ink ratio = Data-ink / Total ink used to print the graphic
+
+Do so by starting with a complete theme (e.g. `theme_classic()`, `theme_void()`) and add / remove elements using `theme()`.
+
+```{r}
+library(tidyverse)
+library(palmerpenguins)
+library(ggtext)
+library(viridis) # Colorblind-Friendly Color Maps for R
+library(RColorBrewer) # ColorBrewer Palettes
+library(paletteer) # a comprehensive collection of color palettes in R using a common interface
+library(tigris) # for downloading and using Census TIGER/Line shapefiles in R
+library(geomtextpath) # to label lines 
+library(ggforce) # to emphasize plot elements
+```
+
+```{r}
+penguins <- palmerpenguins::penguins
+
+
+# Scatterplot example 2: penguin bill length versus bill depth
+plot <- ggplot(data = penguins, aes(x = bill_length_mm, y = bill_depth_mm)) +
+  geom_point(aes(color = species, 
+                 shape = species),
+             size = 2, alpha = 0.8)  +
+  stat_smooth(aes(color = species), se = FALSE, method = "lm") + 
+  scale_color_manual(values = c("darkorange","darkorchid","cyan4")) +
+  theme_minimal() +
+  labs(title = "Penguin bill dimensions",
+       subtitle = "Bill length and depth for Adelie, Chinstrap, and Gentoo penguins at Palmer Station LTER",
+       x = "Bill length (mm)",
+       y = "Bill depth (mm)",
+       shape = "Species",
+       color = "Species")
+
+plot2 <- ggplot(data = penguins, aes(x = bill_length_mm, y = bill_depth_mm)) +
+  geom_point(aes(color = species, 
+                 shape = species),
+             size = 2, alpha = 0.8)  +
+#  stat_smooth(aes(color = species), se = FALSE, method = "lm") + 
+  scale_color_manual(values = c("darkorange","darkorchid","cyan4")) +
+  theme_minimal() +
+  labs(title = "Penguin bill dimensions",
+       subtitle = "Bill length and depth for Adelie, Chinstrap, and Gentoo penguins at Palmer Station LTER",
+       x = "Bill length (mm)",
+       y = "Bill depth (mm)")
+
+plot
+```
+
+**Maximizing the Data-Ink ratio isn’t always *best***
+
+-   Eliminating lots of non-data ink **may render visualizations difficult to read**
+
+    -   [Inbar et al. (2007)](https://doi.org/10.1145/1362550.1362587) found that students preferred a more maximalist visualization design over the minimalist version proposed by Tufte
+
+<!-- -->
+
+-   **Design choices depend on audience and purpose** – how you choose to maximize your data-ink ratio will depend largely on *who* your visualization is for and the *purpose* it’s meant to serve (e.g. a scientific publication may have specific requirements for the design / aesthetics of a visualization, while an infographic-style visualization may leave space for more creative liberties)
+
+A general rule of thumb: **aim to maximize the data-ink ratio while not sacrificing overall readability, design, aesthetics**.
+
+### **Remove redundant legend information**
+
+-   use `theme(legend.position = "none)` when applicable
+
+**Add direct labels & minimize rotated text**
+
+-   We can use a combination of `coord_flip()`, `geom_text()`, `labs()`, and `theme()` to further eliminate non-data ink and reduce overall eye movement.
+
+**Move the legend (positioning)**
+
+-   Reduce eye movement by updating the legend position (e.g. move it onto the plot panel):
+
+```{r}
+plot + 
+  theme(
+    legend.position = c(0.85, 0.15) # you'll need to adjust these values for your plot!
+  )
+```
+
+-   Also note the redundant `species` mapping (color and shape) – sometime redundancy is important for accessibility!
+
+#### **Move the legend (incorporate into title text)**
+
+```{r}
+plot +
+  labs(subtitle = "Some subtitle text where <span style='color:red;'>**these words**</span> are bolded and red") +
+  theme(plot.subtitle = ggtext::element_markdown())
+```
+
+#### **Move the legend (use direct labels)**
+
+-   Reduce eye movement and excess ink by including legend info as direct labels on the plot (here, using the [`{geomtextpath}` package](https://allancameron.github.io/geomtextpath/); minimal code example, below):
+
+```{r}
+ggplot(penguins, aes(x = bill_length_mm, y = bill_depth_mm, color = species, shape = species)) +
+  geom_point(size = 3, alpha = 0.8) +
+  geomtextpath::geom_labelsmooth(aes(label = species), method = "lm", size = 5) +
+  theme_minimal()
+```
+
+### **Use annotations to improve readability / interpretability**
+
+-   Is the y-axis necessary for this plot? What’s the author’s goal? How do annotations help achieve that goal?
+
+    ![](images/clipboard-644034883.png){width="520"}
+
+    -   Example: [Is white space always your friend?](https://questionsindataviz.com/2018/01/06/is-white-space-always-your-friend/), by Neil Richards
+
+Discussion notes:
+
+-   maybe add y-axis of percentage of population, not count?
+
+-   adds context
+
+-   name spiking
+
+“The key thing we do is to add a title to the chart, as an entry point and to explain what is going on. **Text and other annotations add enourmous value for non-chart people." -** [John Burn-Murdoch](https://www.ft.com/john-burn-murdoch), Financial Times
+
+-   Example figure from [Vaccines and Omicron mean Covid now less deadly than flu in England](https://www.ft.com/content/e26c93a0-90e7-4dec-a796-3e25e94bc59b), by John Burn-Murdoch
+
+## Consider ways to provide additional context for your data
+
+### **Plot groups against the whole when faceting**
+
+Facets (aka small multiples) allow us to more easily view individual groups. Here, the author plots individual groups (male vs. female passenger distributions on the Titanic) against the data set total (distribution of all passengers):
+
+Example from [Fundamentals of Data Visualization](https://clauswilke.com/dataviz/histograms-density-plots.html), by Claus Wilke. For an example with code, check out [this slide](https://samanthacsik.github.io/EDS-240-data-viz/slides/week3.2-distributions-slides.html#/scaled-density) from Lecture 3.2
+
+### **Add benchmark values**
+
+Add vertical (`geom_vline()`) or horizontal (`geom_hline()`) lines at important values:
+
+**Example:**
+
+**Fig cap:** Temporal Variation in Bottom Temperature. Monthly bottom (4.5 m depth) temperatures at Mohawk Reef (34.396290, -119.731297) in Santa Barbara, CA compiled from 2005-2017. Vertical dashed lines represent three of four treatment temperatures (11, 16, 21°C). Data Source: Santa Barbara Coastal Long-Term Ecological Research group (adapted from [Csik et al. 2023](https://doi.org/10.3389/fmars.2023.1072807))
+
+## 
+
+### **Add 1:1 line, if relevant**
+
+For data where the **relevant comparison is the x = y line** (e.g. scatter plots of paired data), **plot the 1:1 line**.
+
+-   Example: the author compares gene expression levels in a mutant virus to the non-mutated (wild-type) variant. He presents three (increasingly better) versions of the same plot
+
+    -   Example from [Fundamentals of Data Visualization](https://clauswilke.com/dataviz/balance-data-context.html), by Claus Wilke
+
+(eliminating the gridlines so we can focus on the trend line)
+
+## Draw attention to important information / values
+
+### **Use color to highlight groups / values**
+
+Highlight data by coloring groups of interest either manually or by using helpful packages, like `{gghighlight}` (we saw an example of this in [lecture 3.3](https://samanthacsik.github.io/EDS-240-data-viz/slides/week3.3-evolution-slides.html#/spaghetti-plot)):
+
+#### **Use annotations to highlight groups / values**
+
+Or add annotations to your plots to call attention to data of interest (here, shown using the [`{ggforce}` package](https://ggforce.data-imaginist.com/index.html); minimal code example, below):
+
+```{r}
+plot + 
+  ggforce::geom_mark_ellipse(aes(filter = species == "Gentoo", label = "Gentoo penguins", 
+                                 description = "This species tends to have..."))
+```
+
+## What *doesn’t* work so well in data visualization?
+
+## 
+
+### **Good data visualization design *generally* avoids…**
+
+-   **information overload** (e.g. too many colors / shapes / fonts, groups, variables)
+
+<!-- -->
+
+-   **dual axes** (can easily mislead audiences)
+
+-   **pie charts** (really hard for humans to effectively compare the size of angles)
+
+-   **3D plots** (distort perception and are generally distracting)
+
+**Our job is to make it as easy as possible for our readers to understand our data without having to do mental gymnastics.** The chart types above (more often than not) ask too much of our readers in their quest to understand the information being presented.
+
+There *may* be circumstances where the above are executed well…but more often than not, you’re safest avoiding them.
+
+### **Information overload is no fun . . .**
+
+It can be nearly impossible to easily process many different variables, colors, shapes, etc. on the same visualization (and realistically, most people won’t want to take the time to even try):
+
+-   Example 1: *Source: [Stack Exchange](https://gis.stackexchange.com/a/3132)*
+
+-   Example 2: *Source: Unknown, but borrowed from Allison Horst’s [lecture](https://docs.google.com/presentation/d/e/2PACX-1vSpUdai7BTXprh3dwSNBpJymNGUIOFhEgQn5XbQWZhWy8EpUyd64Lem08YK_kc6tP0iyoJ5wRAVvSYe/pub?start=false&loop=false&delayms=3000&slide=id.ge99f105fe7_0_25)*
+
+-   Example 3: *Source: Unknown, but borrowed from Allison Horst’s [lecture](https://docs.google.com/presentation/d/e/2PACX-1vSpUdai7BTXprh3dwSNBpJymNGUIOFhEgQn5XbQWZhWy8EpUyd64Lem08YK_kc6tP0iyoJ5wRAVvSYe/pub?start=false&loop=false&delayms=3000&slide=id.ge99f105fe7_0_30)*
+
+    ## 
+
+#### **Reduce information overload whenever possible**
+
+Consider some of the approaches we’ve already discussed:
+
+-   **highlighting** the most important groups / values
+
+-   **faceting** (small multiples)
+
+-   creating **separate visualizations**
+
+-   cohesive and intuitive **color scheme** (more on colors next week)
+
+Or some that we haven’t covered:
+
+-   create **interactive** tables and / or visualizations using [htmlwidgets](https://www.htmlwidgets.org/) (e.g. [leaflet](https://rstudio.github.io/leaflet/) maps, [plotly](https://plotly.com/r/), charts, [DT](https://rstudio.github.io/DT/) data tables)
+
+-   create **reactive** outputs using tools like [`{shiny}`](https://shiny.posit.co/)
+
+    -   check out the [EDS 430 (Intro to Shiny)](https://ucsb-meds.github.io/EDS-430-Intro-to-Shiny/) materials as a starting point!
+
+## 
+
+**Dual y-axes can deliberately mislead readers**
+
+**The scales of dual axis charts are arbitrary and therefore can (deliberately) mislead readers about the relationship between the two data series.**
+
+-   Example using real [Worldbank data](https://data.worldbank.org/indicator/NY.GDP.MKTP.CD?end=2016&start=1960&view=chart) for the German GDP and the global GDP between 2004 and 2016:
+
+    -   While both GDPs may appear to increase at the about same rate, they actually don’t – global GDP increased by 80% until 2014, while the German GDP increased by 40%.
+
+-   Example from [Why not to use two axes, and what to use instead](https://blog.datawrapper.de/dualaxis/), by Lisa Charlotte Muth
+
+**Alternatives to dual y-axes:**
+
+1.  **side-by-side charts**
+
+-   Separate your data series into **side-by-side charts** – this allows us to create two different axes for two different charts.
+
+2.  **indexed charts**
+
+-   **Indexed charts** show the *relative change* (percentage increase or decrease) of a data series over time. Consider adding labels or tooltips (e.g. using [`{plotly}`](https://plotly.com/r/)) to include important absolute numbers.
+
+3.  **prioritize & label**
+
+-   Consider **prioritizing and plotting the more important of the two data series**. Then **use annotations** to add information about the omitted variable. This option may not work well for all data sets, but can be effective for dual-axis charts that present both absolute and relative numbers of the same measure.
+
+4.  **connected scatterplot**
+
+-   A **connected scatterplot** places one variable on the y-axis and the other on the x-axis (here, replacing time). Be mindful that these plots are generally less inutitive for a reader and may take more time to decipher patterns.
+
+**The problem with pie charts . . .**
+
+... is actually a problem with humans – **we’re not so great at comparing angles**. We’re bad at comparing angles within a **single** pie chart if they’re all similar, and we’re even worse at comparing angles **across multiple** pie charts.
+
+-   Examples from [Allison Horst](https://docs.google.com/presentation/d/e/2PACX-1vSpUdai7BTXprh3dwSNBpJymNGUIOFhEgQn5XbQWZhWy8EpUyd64Lem08YK_kc6tP0iyoJ5wRAVvSYe/pub?start=false&loop=false&delayms=3000&slide=id.ge99f105fe7_0_66), who adapted from [From Data to Viz](https://www.data-to-viz.com/caveat/pie.html)
+
+-   ex 1 shows pie chart vs bar plot, it's a lot easier for us to visually compare differences more accurately with rectangular area than circular
+
+-   ex 2 shows multiple pie charts and accompanying bar plots, clearly different areas visible in bar plots but hard to tell between pie plots
+
+**Sometimes, pie charts can be a good option**
+
+If you decide a pie chart is the right option, consider:
+
+-   are the main takeaways clear (e.g. proportions different enough)?
+
+<!-- -->
+
+-   avoiding lots of wedges
+
+-   aggregating if there are many tiny ones
+
+-   emphasizing most important wedge
+
+-   labeling directly on the chart
+
+-   comparing to a bar chart version to see which is a better version
+
+*ABC Enterprise Sales. Source: [How to Use Charts and Graphs Effectively](https://www.mindtools.com/ahb9niu/how-to-use-charts-and-graphs-effectively), by MindTools*
+
+### **Pie chart alternative: treemap**
+
+As an alternative to a pie chart, consider [**treemaps**](https://www.data-to-viz.com/graph/treemap.html). Treemaps display hierarchical data as a set of nested rectangles – simpler versions can be used to display parts of a whole using rectangles (which are easier for us to estimate than angles).
+
+Ex 1: *Source: [From Data to Viz](https://www.data-to-viz.com/caveat/pie.html)*
+
+Ex 2: *Source: [`{treemapify}` pkgdown site](https://wilkox.org/treemapify/)*
+
+### **3D charts distort perspective**
+
+**Occlusion:** When we see one object occlude (aka obstruct) another on a 2D surface, our brain perceives the object being hidden as farther away
+
+-   example from: [Data Visualization: Why 3D charts are a terrible idea](https://medium.com/@purohitpraveen/data-vizualization-why-3d-charts-are-a-terrible-idea-32657fbb928e)
+
+**Perspective distortion:** When we view objects in 3D, the objects farther away appear smaller, but our brain perceives them to be of larger size than in the picture.
+
+**Avoid *gratuitous* 3D**
+
+Examples:
+
+<https://samanthacsik.github.io/EDS-240-data-viz/slides/week5.1-good-viz-slides.html#/gratuitous-3d>
+
+-   **The pie chart on the right is an example of using 3D purely for decorative purposes.** Here, the third dimension doesn’t actually convey any additional data. Claus Wilke [calls this](https://clauswilke.com/dataviz/no-3d.html) **gratuitous 3D**, and you should always avoid it.
+
+<!-- -->
+
+-   Consider how gray and blue areas visually compare in the 3D version? What about gray and orange? Now how do your interpretations change when inspecting the 2D version?
+
+<https://samanthacsik.github.io/EDS-240-data-viz/slides/week5.1-good-viz-slides.html#/3d-position-scales>
+
+-   Example of a plot with three genuine position scales (x, y, and z) to represent `mtcars` data (viewed from four different perspectives
+
+**Alternatives to 3D position scales**
+
+1.  If we primarily care about fuel efficiency as the response variable, **plot it twice** (once against displacement and once against power):
+
+    -   Source: [Fundamentals of Data Visualization](https://clauswilke.com/dataviz/no-3d.html), by Claus Wilke
+
+2.  If we are more interested in how displacement and power relate to each other, with fuel efficiency as a secondary variable of interest, **create a bubble chart** (plot power vs. displacement and map fuel efficiency onto the size of the dots). Be mindful that three variables (even in a 2D space) are still challenging for readers to quickly comprehend.
+
+## Are there ever opportunties to bend / break the rules & guidelines for creating “good” data viz?
+
+## 
+
+**Breaking the rules is sometimes okay.**
+
+Data visualization is both a science and an *art*. **Following these rules / best practices can help us avoid common pitfalls** and avoid creating objectively difficult-to-interpret data visualizations.
+
+*However,* there are arguments for bending (or breaking) the rules every now and again. Consider the following posts:
+
+-   [Why you sometimes need to break the rules in data viz](https://medium.economist.com/why-you-sometimes-need-to-break-the-rules-in-data-viz-4d8ece284919), by Rosamund Pearce
+
+<!-- -->
+
+-   [Master the rules - then break them](https://www.datylon.com/blog/master-and-break-data-visualization-rules#:~:text=The%20key%20take%2Dout%20is,a%20better%2C%20more%20engaging%20way.), by Dieuwertje van Dijk
+
+-   [Does Data Visualization Have Rules? Or Is It All Just “It Depends”?](https://nightingaledvs.com/does-data-visualization-have-rules-or-is-it-all-just-it-depends/), by Nick Desbarats
+
+Examples:
+
+Award-winning data visualization by [Simon Scarr](https://www.simonscarr.com/iraqs-bloody-toll#:~:text=This%20graphic%20was%20created%20to,the%20visual%20metaphor%20of%20blood.) (left), and a copy / remake of that visualization which follows the rules, created by [Andy Cotgreave](https://www.infoworld.com/article/3088166/why-how-to-lie-with-statistics-did-us-a-disservice.html) (right).
+
+Image & caption source: [Master the rules - then break them](https://www.datylon.com/blog/master-and-break-data-visualization-rules#:~:text=The%20key%20take%2Dout%20is,a%20better%2C%20more%20engaging%20way.)
+
+Considering examples of data viz:
+
+<https://samanthacsik.github.io/EDS-240-data-viz/slides/week5.1-good-viz-slides.html#/co2-1>
+
+Clearing the Air, by [Christopher Ingraham](https://www.washingtonpost.com/people/christopher-ingraham/), writing for [The Washington Post](https://www.washingtonpost.com/business/2019/06/06/why-crowded-meetings-conference-rooms-make-you-so-so-tired/)
+
+**Take some time to discuss the following:**
+
+-   where are your eyes drawn first, second, etc.?
+
+-   what are the main messages / takeaways?
+
+-   where has the author chosen to simplify this visualization (i.e. reduce extraneous elements)? does it make it easier / more challenging to interpret?
+
+-   what would you change about this visualization?
+
+## 
+
+![](images/clipboard-3620875089.png){width="537"}
+
+Annotations adapted from [\@chezVoila](https://twitter.com/chezVoila/status/1136631524919513088)
+
+**Palmer penguin classification**
+
+Perfectly Proportional Penguins, by [Cara Thompson](https://www.cararthompson.com/) as part of [TidyTuesday](https://github.com/rfordatascience/tidytuesday) ([code](https://github.com/cararthompson/tidytuesdays/blob/main/scripts/202007d_penguins.R))
+
+**Glimmers of hope in large carnivore recovery**
+
+[Fig. 3](https://www.nature.com/articles/s41598-022-13671-7/figures/3), by [Ingeman et al. 2022](https://www.nature.com/articles/s41598-022-13671-7): **Glimmers of hope and critical cases.** Distribution of large carnivore species across categories of current IUCN status (x-axis) and population trend (y-axis). Improvements in status are indicated by gold and declines by blue, with bubble size indicating the number of status category changes. The majority of species have not undergone any changes in status (shown in light gray). Note: No change in status may indicate lack of recent assessment, insufficient data, or, in the case of species designated Least Concern, effective conservation efforts

@@ -1,0 +1,227 @@
+---
+author: "Anna Ramji"
+date: 2024-01-31
+title: "EDS 240: Discussion -- Week 4"
+---
+
+Data viz
+
+-   what are 2 or 3 ways I can make this question clear to the audience?
+
+-   which of these 2 or 3 options works best?
+
+What we lose from line plots:
+
+-   sample size
+
+-   distribution of data
+
+Be clear about what the message you're trying to convey is.
+
+Aesthetics can help emphasize your message
+
+some examples we've seen in class so far:
+
+-   ridgeline plots: chronological sequences, distribution of your data (grouped)
+
+    -   gridlines: vertical, horizontal, both
+
+        -   vertical/both: direct easy comparison between groups
+
+        -   just horizontal: might look messier, could draw your eye down rather than across
+
+Themes
+
+-   `theme_gray()`
+
+    -   if you're going to use a grey background, you need to have a good reason for it
+
+    -   grey often has a habit of dulling differences you're trying to see visually
+
+-   `theme_bw()`
+
+    -   draws your eye, preserves major and minor gridlines
+
+    -   has white background (white on black) – makes colors pop
+
+    -   plot is outlined
+
+    -   question you could ask that makes classic more efficient: looking at trends
+
+    -   when you're dealing with trends, minimalism is your best friend (??)
+
+    -   if you want to go beyond that, talk about outliers, etc., statistics (go beyond basic trends), incorporate gridlines
+
+    -   have major gridlines (can get rid of minor)
+
+    -   can set gridline alpha to 0.5
+
+    -   reduce opacity if many points
+
+-   `theme_classic()`
+
+    -   no gridlines
+
+    -   good for trend lines
+
+you can also change the shape to make it more colorblind friendly, anyone with visual impairment (to a certain degree)
+
+In discussion lecture, we went over more examples of where theme elements can be changed to better emphasize the question and answer for different plots
+
+-   adjusting gridline opacity (alpha)
+
+-   rarely makes sense to have a grey background
+
+-   (white background)
+
+-   theme_bw() supremacy
+
+-   avoid 3D plots like the plague
+
+    -   color-coded elevation makes sense though
+
+    -   i personally think that if it's interactive it's okay, but try your best to do something else, i.e., showing an attribute by size of marker
+
+------------------------------------------------------------------------
+
+Setup:
+
+Last week’s discussion focused on recreating the data layers of the U.S. Drought Monitor’s [visualization](https://en.wikipedia.org/wiki/Droughts_in_California#/media/File:Drought_area_in_California.svg) of CA drought conditions through time. **This week, you’ll focus on refining the theme (non-data plot elements) to match the original visualization as closely as possible.**
+
+### **Background**
+
+**Themes** are used to modify the non-data components of plots (e.g. titles, labels, fonts, background, gridlines, legend). In addition to using pre-built themes (available via the [`{ggplot2}` package](https://ggplot2.tidyverse.org/reference/ggtheme.html) and also from extension packages), you can fine-tune the appearance of your plots theme by making adjustments using the [`theme()` function](https://ggplot2.tidyverse.org/reference/theme.html).
+
+#### **Applying pre-built themes:**
+
+`{ggplot2}` comes with eight [complete themes](https://ggplot2.tidyverse.org/reference/ggtheme.html), which can be applied as-is, or further modified using `theme()` (see next section, below). There are also *many* additional themes which can be applied via ggplot extension packages. A small handful of packages are listed in the expandable note, below:
+
+::: {.callout-tip collapse="true" icon="false"}
+## A non-exhaustive list of ggplot theme extension packages
+
+-   [**`{ggthemes}`**](https://jrnold.github.io/ggthemes/): a collection of popular themes, some of which also come with corresponding color scales
+
+-   [**`{hrbrthemes}`**](https://cinc.rud.is/web/packages/hrbrthemes/): typographic-centric themes and theme components
+
+-   [**`{ggthemr}`**](https://github.com/Mikata-Project/ggthemr): a collection of color palettes and plot layouts for quickly setting a ggplot theme
+
+-   [**`{ggtech}`**](https://github.com/ricardo-bion/ggtech): themes based off large tech company color palettes
+
+-   [**`{ggdark}`**](https://github.com/nsgrantham/ggdark): dark mode for ggplot complete themes
+
+-   [**`{firatheme}`**](https://github.com/vankesteren/firatheme): a ggplot theme with [Fira font](https://fonts.google.com/?query=fira)
+
+-   [**`{urbnthemes}`**](https://urbaninstitute.github.io/urbnthemes/): tools for creating [Urban Institute](https://www.urban.org/)-themed plots and maps in R (also check out the [Urban Institute Data Visualization Style Guide](https://urbaninstitute.github.io/graphics-styleguide/) for a really great example of how an organization enforces a cohesive style across all published data viz content)
+
+-   [**`{bbplot}`**](https://github.com/bbc/bbplot/): tools for creating ggplots in the style used by the [BBC News](https://www.bbc.com/news) data team
+
+-   [**`{ggpomological}`**](https://www.garrickadenbuie.com/project/ggpomological/): a ggplot2 theme based on the [USDA Pomological Watercolor Collection](https://search.nal.usda.gov/discovery/collectionDiscovery?vid=01NAL_INST:MAIN&collectionId=81279629860007426)
+
+-   [**`{tvthemes}`**](https://ryo-n7.github.io/2019-05-16-introducing-tvthemes-package/): a collection of ggplot themes and color / fill palettes based on everybody’s favorite TV shows
+
+Keep your eye out for extension packages that supply both a geom(s) *and* a pre-build theme(s) designed specifically to work with that geom. For example, the [`{ggridges}` package](https://wilkelab.org/ggridges/) provides both a few different ridgeline plot geoms and a [pre-built `theme_ridges()` theme](https://wilkelab.org/ggridges/articles/introduction.html#themes) to pair with them.
+:::
+
+```{r}
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+##                                    setup                                 ----
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+#..........................load packages.........................
+library(tidyverse)
+
+#..........................import data...........................
+tuesdata <- tidytuesdayR::tt_load('2021-07-20')
+drought <- tuesdata$drought
+
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+##                            wrangle drought data                          ----
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+drought_clean <- drought |>
+
+  # select cols of interest & update names as needed ----
+  select(date = valid_start, state_abb, drought_lvl, area_pct) |> 
+
+  # add year, month & day cols using {lubridate} fxns ----
+  # NOTE: this step isn't necessary for our plot, but I'm including as examples of how to extract different date elements from a object of class Date using {lubridate}~ ----
+  mutate(year = year(date),
+         month = month(date, label = TRUE, abbr = TRUE),
+         day = day(date)) |>
+
+  # add drought level conditions names ----
+  mutate(drought_lvl_long = factor(drought_lvl,
+                            levels = c("D4", "D3", "D2", "D1","D0", "None"),
+                            labels = c("(D4) Exceptional", "(D3) Extreme",
+                                       "(D2) Severe", "(D1) Moderate", "(D0) Abnormally Dry", 
+                                       "No Drought"))) |>
+  
+  # reorder cols ----
+  select(date, year, month, day, state_abb, drought_lvl, drought_lvl_long, area_pct)
+
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+##       create stacked area plot of CA drought conditions through time     ----
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+drought_clean |> 
+  
+  # remove drought_lvl "None" & filter for just CA ----
+  filter(drought_lvl != "None",
+         state_abb == "CA") |> 
+  
+  # create ggplot ----
+  ggplot(mapping = aes(x = date, y = area_pct, fill = drought_lvl_long)) +
+  
+  # reverse order of groups so level D4 is closest to x-axis ----
+  geom_area(position = position_stack(reverse = TRUE)) +
+  
+  # update colors to match US Drought Monitor (colors selected using ColorPick Eyedropper from original USDM data viz) ----
+  scale_fill_manual(values = c("#853904", "#FF0000", "#FFC100", "#FFD965", "#FFFF00")) +
+  
+  # set x-axis breaks & remove padding between data and x-axis ----
+  scale_x_date(breaks = scales::breaks_pretty(n = 10),
+               expand = c(0, 0)) +
+
+  # set y-axis breaks & convert values to percentages & & remove padding between data and y-axis----
+  scale_y_continuous(breaks = seq(0, 100, by = 10),
+                     labels = scales::label_percent(scale = 1),
+                     expand = c(0, 0)) +
+  
+  # add title ----
+  labs(title = "Drought area in California") +
+  
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+##                                                                            --
+##------------------------- NEWLY ADDED THEME CODE!-----------------------------
+##                                                                            --
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+  # set theme minimal (includes major/minor grid lines, no axes) ----
+  theme_minimal() +
+  
+  # fine-tune adjustments to plot theme ----
+  theme(
+    
+    # update axis lines & ticks color ----
+    axis.line = element_line(color = "#5A9CD6"),
+    axis.ticks = element_line(color = "#5A9CD6"),
+    
+    # adjust length of axis ticks ----
+    axis.ticks.length = unit(.2, "cm"),
+    
+    # center plot title ----
+    plot.title = element_text(hjust = 0.5, color = "#686868", size = 25,
+                              margin = margin(t = 10, r = 0, b = 15, l = 0)),
+    
+    # remove axis & legend titles ----
+    axis.title = element_blank(),
+    legend.title = element_blank(),
+    
+    # axis text color & size ----
+    axis.text = element_text(color = "#686868", size = 15),
+    legend.text = element_text(color = "#686868", size = 15),
+    
+    # move legend below plot ----
+    legend.position = "bottom",
+  )
+```

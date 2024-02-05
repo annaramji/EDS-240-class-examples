@@ -1,0 +1,309 @@
+---
+author: "Anna Ramji"
+date: 2024-02-05
+title: "EDS 240: Lecture 5.2, Colors"
+---
+
+# Lecture 5.2: Colors
+
+Why do we use color?
+
+Spend a couple minutes discussing with your Learning Partners the following:
+
+Why and / or when should we use color in data visualizations?
+
+Find an example(s) of a data viz that uses color to convey information to share in #eds-240-data viz. Note some of your own observations about the color choices (i.e. why these colors? palette arrangement?).
+
+**Choosing colors is difficult and they should be purposefully chosen**
+
+You’ll probably iterate on them as you sit with your visualization and of course, as you get feedback from others.
+
+**Some places to start / things to consider:**
+
+-   is using color the best and / or only way to visually represent your variable(s)?
+
+```{=html}
+<!-- -->
+```
+-   are you designing for a particular organization / brand?
+
+-   what emotions are you trying (or not trying) to elicit?
+
+-   who is your audience?
+
+-   are your data commonly represented using a particular color scheme?
+
+-   what data types (e.g. numeric vs. categorical, discrete vs. continuous?) are you working with?
+
+**What is color?**
+
+There are a number of **different color spaces that are used to represent and define color**. [HSV and HSL](https://en.wikipedia.org/wiki/HSL_and_HSV#:~:text=HSL%20stands%20for%20hue%2C%20saturation,hue%2C%20saturation%2C%20and%20intensity.) are used commonly in color pickers (e.g. [Google color picker](https://www.google.com/search?q=google+color+picker&oq=google+color+picker&gs_lcrp=EgZjaHJvbWUqCggAEAAYsQMYgAQyCggAEAAYsQMYgAQyBggBEEUYQDIHCAIQABiABDIHCAMQABiABDIHCAQQABiABDIGCAUQRRg8MgYIBhBFGDwyBggHEEUYPNIBCDIwMDhqMGo0qAIAsAIA&sourceid=chrome&ie=UTF-8)). [HCL](https://en.wikipedia.org/wiki/HCL_color_space) underlies some default `{ggplot2}` parameters. You don’t need to worry much about the underlying theory of color spaces, but know that **changing any of the parameters (e.g. hue, saturation, etc.) can influence how we perceive information in a data visualization.**
+
+-   HSV (Hue, Saturation, Value)
+
+    -   Image source: [medium.com](https://medium.com/awkbit/choosing-a-color-scheme-for-your-website-awkbit-59ab750151dc)
+
+-   HCL (Hue, Chroma, Luminance)
+
+    -   Image source: Stauffer et al. (2015) <https://doi.org/10.1175/BAMS-D-13-00155.1>
+
+**Different color scales for different data types**
+
+-   Ex: shows infographic with 2 categories:
+
+    -   Quantitative color scales:
+
+        -   sequential & classified / unclassified
+
+        -   diverging & unclassed vs classed (think bins vs gradient or palette)
+
+    -   qualitative color scales:
+
+        -   categorical
+
+-   Image source: [Which color scale to use when visualizing data](https://blog.datawrapper.de/which-color-scale-to-use-in-data-vis/), by Lisa Charlottte Muth. This is the first article of a 4 part series ([Part 2](https://blog.datawrapper.de/quantitative-vs-qualitative-color-scales/) / [Part 3](https://blog.datawrapper.de/diverging-vs-sequential-color-scales/) / [Part 4](https://blog.datawrapper.de/classed-vs-unclassed-color-scales/)) – Sam highly recommends reading!
+
+**Categorical scales**
+
+-   mainly formed by selecting differet *hues*
+
+```{=html}
+<!-- -->
+```
+-   hues assigned to each group must be distinct and ideally have different lightnesses
+
+-   groups don’t have an intrinsic order
+
+-   limit to no more than 7 hues
+
+Map source: [Analyzing US Census Data](https://walker-data.com/census-r/index.html), by Kyle Walker
+
+**Sequential scales**
+
+<https://samanthacsik.github.io/EDS-240-data-viz/slides/week5.2-colors-slides.html#/sequential>
+
+-   colors assigned to data values in a continuum, based on lightness, hue, or both
+
+```{=html}
+<!-- -->
+```
+-   lower values typically associated with lighter colors & higher values associated with darker colors
+
+-   can use a single hue *or* two hues
+
+**Diverging scales:**
+
+-   combination of two sequential palettes with a shared endpoint at the central value
+
+-   central value is assigned a light color (light gray is best)
+
+-   use a distinctive hue for each of the component palettes
+
+Map source: [2020 U.S. Election Mapped: TrumpLand vs Biden Archipelago](https://vividmaps.com/us-election-2020/), by Vivid Maps
+
+**Base plots (for applying color scales to)**
+
+"We’ll be testing out different palettes throughout this lesson. Instead of having to retype the code for our plots each time, let’s create and save two versions of a penguin scatterplot. We can then call either of these plot objects to modify with different color scales:"
+
+```{r library}
+library(palmerpenguins)
+library(tidyverse)
+```
+
+Requires a categorical color scale:
+
+```{r}
+cat_color_plot <- ggplot(penguins, aes(x = bill_length_mm, y = bill_depth_mm, color = species, shape = species)) +
+  geom_point(size = 4, alpha = 0.8)
+
+cat_color_plot 
+```
+
+Requires a continuous color scale:
+
+```{r}
+cont_color_plot <- ggplot(penguins, aes(x = bill_length_mm, y = bill_depth_mm, color = body_mass_g)) +
+  geom_point(size = 4, alpha = 0.8) 
+
+cont_color_plot 
+```
+
+## Ensuring inclusive and accessible design through your color choices
+
+## 
+
+**What is colorblindness?**
+
+Color vision deficiency aka colorblindness is the decreased ability to see color or differences in color. It’s estimated that about 1 in 12 men (8%) and 1 in 200 women (0.5%) are affected ([Wikipedia](https://en.wikipedia.org/wiki/Color_blindness)).
+
+Color plate tests are used to help identify different forms of color blindness. Try using the [Let’s get color blind](https://chromewebstore.google.com/detail/lets-get-color-blind/bkdgdianpkfahpkmphgehigalpighjck) Chrome extension to emulate different forms of colorblindness while looking at the above plates. Image source: [American Optometric Association](https://www.aoa.org/healthy-eyes/eye-and-vision-conditions/color-vision-deficiency?sso=y)
+
+**The problem with rainbow color maps**
+
+-   colors don’t follow any natural perceived ordering (no innate sense of higher or lower)
+
+```{=html}
+<!-- -->
+```
+-   perceptual changes in rainbow colors are not uniform (e.g. colors appear to change faster in yellow region than green region)
+
+-   insensitive to color vision deficiencies
+
+Top image source: [Why we use bad color maps and what you cando about it](https://www.kennethmoreland.com/color-advice/BadColorMaps.pdf) \| Bottom left image source: Ware C, Stone M, Albers Szafir D (2023) Rainbow colormaps are not all bad. IEEE Computer Graphics and Applications 43:88-93 [10.1109/MCG.2023.3246111](https://www.computer.org/csdl/magazine/cg/2023/03/10128890/1NdJMHqISnS) \| For another example of poor use of rainbow color maps, see this [world map with binned colors](https://en.wikipedia.org/wiki/Poverty#/media/File:Countries_by_Human_Development_Index_(2020).png)
+
+**Rainbow colormaps aren’t all bad**
+
+-   Problematic, perceptually nonuniform and unordered rainbow colormaps
+
+    -   <https://samanthacsik.github.io/EDS-240-data-viz/slides/images/week5/bad-rainbow.png>
+
+-   Improved, perceptual uniform and diverging rainbow colormaps
+
+    -   <https://samanthacsik.github.io/EDS-240-data-viz/slides/images/week5/better-rainbow.png>
+
+Image source: Ware C, Stone M, Albers Szafir D (2023) Rainbow colormaps are not all bad. IEEE Computer Graphics and Applications 43:88-93 [10.1109/MCG.2023.3246111](https://www.computer.org/csdl/magazine/cg/2023/03/10128890/1NdJMHqISnS)
+
+Also check out [Stoelzle & Stein (2021)](https://doi.org/10.5194/hess-25-4549-2021) (Figure 1 is particularly helpful!) and [Crameri et al. (2020)](https://doi.org/10.1038/s41467-020-19160-7) for some really great supplemental reading
+
+## **Alternative: Viridis**
+
+[The `viridis` color scales](https://ggplot2.tidyverse.org/reference/scale_viridis.html) are perceptually-uniform (even when printed in gray scale) and colorblindness-friendly:
+
+<https://samanthacsik.github.io/EDS-240-data-viz/slides/images/week5/viridis-continuous.png>
+
+<https://samanthacsik.github.io/EDS-240-data-viz/slides/images/week5/viridis-binned.png>
+
+There are a number of different ways to apply `viridis` color scales, but I often opt for [`scale_*_viridis_*()` functions](https://ggplot2.tidyverse.org/reference/scale_viridis.html), which come pre-loaded with `{ggplot}`.
+
+### **Using viridis color scales**
+
+Discrete viridis scales:
+
+```{r}
+cat_color_plot +
+  scale_color_viridis_d(option = "viridis")  # _d for discrete values
+
+cat_color_plot +
+  scale_color_viridis_d(option = "viridis",
+                        direction = -1) # switch order of palette
+```
+
+Continuous viridis scales:
+
+```{r}
+cont_color_plot +
+  scale_color_viridis_c(option = "magma") # _c for continuous
+```
+
+Check out the [documentation](https://ggplot2.tidyverse.org/reference/scale_viridis.html) and play around with some alternative options.
+
+## **Alternative: RColorBrewer**
+
+The [ColorBrewer color scales](https://ggplot2.tidyverse.org/reference/scale_brewer.html) provides color schemes for maps and other graphics. There is also a [web-based interface](http://colorbrewer2.org/) for generating palettes.
+
+```{r}
+RColorBrewer::display.brewer.all(colorblindFriendly = FALSE)
+
+RColorBrewer::display.brewer.all(colorblindFriendly = TRUE)
+```
+
+`{RColorBrewer}` comes with a couple useful functions for quickly viewing and assembling your palette’s HEX codes:
+
+```{r}
+# Preview a palette with your number of desired colors:
+RColorBrewer::display.brewer.pal(n = 6, name = 'Dark2')
+
+# print HEX codes of your palette
+RColorBrewer::brewer.pal(n = 6, name = 'Dark2')
+
+# could save the palette using the hex codes from above, i.e.,
+
+dark_pal_6 <- RColorBrewer::brewer.pal(n = 6, name = 'Dark2')
+```
+
+### **Using RColorBrewer color palettes**
+
+Use the right function (all pre-loaded with `{ggplot2}`) for the type of data / palette:
+
+```{r}
+# Use scale_color_brewer() to apply qualitative palettes
+ cat_color_plot +
+  scale_color_brewer(palette = "Dark2") 
+
+# Use scale_color_distiller() for unclassed versions of continuous color scales
+cont_color_plot +
+  scale_color_distiller(palette = "BuPu") # blue purple
+
+# Use scale_color_fermenter() for classed versions of continuous color scales
+# (binned palette)
+cont_color_plot +
+  scale_color_fermenter(palette = "YlGnBu") # you can choose many options to customize your palette in all of these
+```
+
+Check out the [documentation](https://ggplot2.tidyverse.org/reference/scale_brewer.html) and play around with some alternative options.
+
+-   distiller:
+
+    -   usually continuous colors
+
+    -   like scale_color_continuous
+
+-   fermenter:
+
+    -   usually binned colors
+
+    -   like scale_color_binned e.x.
+
+**Tip: outline points to make light colors more visible**
+
+Rather than `color` points by `body_mass_g`, we can `fill` points by `body_mass_g`. Then, we need to change the [`shape` of our points to `21`](https://ggplot2.tidyverse.org/articles/ggplot2-specs.html#sec:shape-spec), which is the code for an outlined, fill-able point:
+
+```{r}
+library(palmerpenguins)
+library(tidyverse)
+
+ggplot(penguins, aes(x = bill_length_mm, y = bill_depth_mm, fill = body_mass_g)) +
+  geom_point(shape = 21, size = 4, alpha = 0.8) +
+  scale_fill_distiller(palette = "BuPu")
+```
+
+Trick comes courtesy of [Albert Rapp](https://albert-rapp.de/) and his [How to Use Better Colors in ggplot (3 Easy Ways)](https://www.youtube.com/watch?v=ZVSbY4z7tMY) video tutorial. Check out his [YouTube channel](https://www.youtube.com/@rappa753) for *tons* of great R content.
+
+------------------------------------------------------------------------
+
+**Use redundant mapping whenever possible**
+
+Recall that colors are [low on the hierarchy of elementary perceptual tasks](https://samanthacsik.github.io/EDS-240-data-viz/slides/week3.1-choosing-graphic-forms-slides.html#/hierarchy). **When possible, avoid conveying important information purely through color** – consider how you might additionally use shapes, symbols, typography, or annotations.
+
+<https://samanthacsik.github.io/EDS-240-data-viz/slides/week5.2-colors-slides.html#/redundant-mapping>
+
+Figure 2 from Apigo A and Oono R (2022) Plant abundance, but not plant evolutionary history, shapes patterns of host specificity in foliar fungal endophytes. Ecosphere. 13(1):e03879. <https://doi.org/10.1002/ecs2.3879>
+
+There are *so many* other great pre-made color palettes to explore, many of which take into consideration color vision deficiencies (*but always double check!*)
+
+## **Use paletteer to access TONS of palettes**
+
+It would be impossible to list out on one slide all the palette packages available for use, but the [`{paletteer}` package](https://emilhvitfeldt.github.io/paletteer/) gets close to doing just that.
+
+It provides **a common interface for accessing a near-comprehensive list of palettes (over 2,000!!) across various packages**.
+
+Explore the extensive list of [supported palette packages](https://emilhvitfeldt.github.io/paletteer/#included-packages)!
+
+**Use `{paletteer}` to generate HEX codes *or* apply palettes directly**
+
+-   **Generate a list of HEX codes** using one of [three `paletteer_*()` functions](https://emilhvitfeldt.github.io/paletteer/#examples)
+
+```{=html}
+<!-- -->
+```
+-   **Apply a palette directly to your ggplot** using one of [three `scale_*_paletteer_*()` functions](https://emilhvitfeldt.github.io/paletteer/#ggplot2-scales)
+
+Find most palettes on the [**R Color Palettes**](https://emilhvitfeldt.github.io/r-color-palettes/) **website**
+
+-   Click on any palette for more information & example plots
+
+**Give `{paletteer}` a try (or use any package directly)!**
+
+Update the colors of the plots below, either by using the `{paletteer}` package *or* by following the documentation for any specific package. It’s helpful to start by looking over the [list of supported packages](https://emilhvitfeldt.github.io/paletteer/#included-packages).
+
+**Examples**
