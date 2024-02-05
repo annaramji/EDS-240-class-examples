@@ -22,9 +22,8 @@ You’ll probably iterate on them as you sit with your visualization and of cour
 
 -   is using color the best and / or only way to visually represent your variable(s)?
 
-```{=html}
 <!-- -->
-```
+
 -   are you designing for a particular organization / brand?
 
 -   what emotions are you trying (or not trying) to elicit?
@@ -67,9 +66,8 @@ There are a number of **different color spaces that are used to represent and de
 
 -   mainly formed by selecting differet *hues*
 
-```{=html}
 <!-- -->
-```
+
 -   hues assigned to each group must be distinct and ideally have different lightnesses
 
 -   groups don’t have an intrinsic order
@@ -84,9 +82,8 @@ Map source: [Analyzing US Census Data](https://walker-data.com/census-r/index.ht
 
 -   colors assigned to data values in a continuum, based on lightness, hue, or both
 
-```{=html}
 <!-- -->
-```
+
 -   lower values typically associated with lighter colors & higher values associated with darker colors
 
 -   can use a single hue *or* two hues
@@ -142,9 +139,8 @@ Color plate tests are used to help identify different forms of color blindness. 
 
 -   colors don’t follow any natural perceived ordering (no innate sense of higher or lower)
 
-```{=html}
 <!-- -->
-```
+
 -   perceptual changes in rainbow colors are not uniform (e.g. colors appear to change faster in yellow region than green region)
 
 -   insensitive to color vision deficiencies
@@ -262,9 +258,13 @@ Rather than `color` points by `body_mass_g`, we can `fill` points by `body_mass_
 library(palmerpenguins)
 library(tidyverse)
 
-ggplot(penguins, aes(x = bill_length_mm, y = bill_depth_mm, fill = body_mass_g)) +
-  geom_point(shape = 21, size = 4, alpha = 0.8) +
-  scale_fill_distiller(palette = "BuPu")
+ggplot(penguins, aes(x = bill_length_mm,
+                     y = bill_depth_mm,
+                     fill = body_mass_g)) +
+  geom_point(shape = 21, # represents a fillable point
+             size = 4,
+             alpha = 0.8) +
+  scale_fill_distiller(palette = "BuPu") # make sure fill matches aes arg (color, fill)
 ```
 
 Trick comes courtesy of [Albert Rapp](https://albert-rapp.de/) and his [How to Use Better Colors in ggplot (3 Easy Ways)](https://www.youtube.com/watch?v=ZVSbY4z7tMY) video tutorial. Check out his [YouTube channel](https://www.youtube.com/@rappa753) for *tons* of great R content.
@@ -281,6 +281,8 @@ Figure 2 from Apigo A and Oono R (2022) Plant abundance, but not plant evolution
 
 There are *so many* other great pre-made color palettes to explore, many of which take into consideration color vision deficiencies (*but always double check!*)
 
+------------------------------------------------------------------------
+
 ## **Use paletteer to access TONS of palettes**
 
 It would be impossible to list out on one slide all the palette packages available for use, but the [`{paletteer}` package](https://emilhvitfeldt.github.io/paletteer/) gets close to doing just that.
@@ -293,9 +295,8 @@ Explore the extensive list of [supported palette packages](https://emilhvitfeldt
 
 -   **Generate a list of HEX codes** using one of [three `paletteer_*()` functions](https://emilhvitfeldt.github.io/paletteer/#examples)
 
-```{=html}
 <!-- -->
-```
+
 -   **Apply a palette directly to your ggplot** using one of [three `scale_*_paletteer_*()` functions](https://emilhvitfeldt.github.io/paletteer/#ggplot2-scales)
 
 Find most palettes on the [**R Color Palettes**](https://emilhvitfeldt.github.io/r-color-palettes/) **website**
@@ -307,3 +308,359 @@ Find most palettes on the [**R Color Palettes**](https://emilhvitfeldt.github.io
 Update the colors of the plots below, either by using the `{paletteer}` package *or* by following the documentation for any specific package. It’s helpful to start by looking over the [list of supported packages](https://emilhvitfeldt.github.io/paletteer/#included-packages).
 
 **Examples**
+
+**superbloom3** palette from [`{calecopal}`](https://github.com/an-bui/calecopal), applied using the `paletteer::scale_color_paletteer_d()`
+
+```{r}
+cat_color_plot +
+  paletteer::scale_color_paletteer_d("calecopal::superbloom3") +
+  theme_bw()
+```
+
+**WindCave** palette from [`{NatParksPalette}`](https://github.com/kevinsblake/NatParksPalettes), created using `{NatParksPalette}` & applied using `scale_color_gradientn()`
+
+```{r}
+NatParksPalettes::natparks.pals(name = "WindCave",
+                                n = 20, # specify number of values for color scale
+                                type = "continuous") # specify type of scale
+
+my_parks_palette <- NatParksPalettes::natparks.pals(name = "WindCave",
+                                                    n = 20, 
+                                                    type = "continuous") 
+
+
+
+cont_color_plot +
+  scale_color_gradientn(colors = rev(my_parks_palette)) #n allows you to choose a number of colors, smooths across those values
+# use rev() to reverse order of your palette (not all allow direction = -1)
+```
+
+------------------------------------------------------------------------
+
+**Climate and environmental science visualizations can (should) draw from community standards, when possible**
+
+## 
+
+**Some widely-used climate science palettes:**
+
+![](images/clipboard-3675056584.png){width="580"}
+
+**Figure 4.** Appropriate diverging and sequential colour schemes for the following climate data (a), absolute temperature (b), absolute precipitation (c), temperature anomaly (d), precipitation or runoff anomaly (e and f) other climate variables with no symbolic association . Schemes in this figure are 7 class ones designed by Cynthia Brewer, ([Brewer et al. 2003](https://tizmogollon.weebly.com/uploads/1/5/4/7/15475746/brewer_etal_2003_colorbrewer_in_print.pdf))
+
+**Citation:** Kaye NR, Hartley A, Hemming D (2012) Mapping the climate: guidance on appropriate techniques to map climate variables and their uncertainty. Geoscientific Model Development. 5:245-256. www.geosci-model-dev.net/5/245/2012/ ([PDF download](https://www.researchgate.net/publication/307824079_Mapping_the_climate_guidance_on_appropriate_techniques_to_map_climate_variables_and_their_uncertainty))
+
+## Want to design your own palette? Here are some helpful guidelines and considerations…
+
+<https://samanthacsik.github.io/EDS-240-data-viz/slides/week5.2-colors-slides.html#/select-hue>
+
+### **Select hues using color wheels / pickers**
+
+There are lots of different variations of color wheels, but look for hues along the **outer edge**:
+
+-   Common color models: RYB (used by painters), RGB (used in electonic displays), CMYK (used in modern printing). Image source: [medium.com](https://broworks.medium.com/color-guide-terms-definitions-and-useful-websites-6fa4f13bcb85)
+
+When using a color picker, **adjust the HEX code sliding scale** to pick a hue and ensure that the selector is set to the **far right edge** of the box:
+
+-   There are lots of great color pickers out there, though [Google color picker](https://www.google.com/search?q=google+color+picker&sca_esv=598283965&ei=uVyjZdXpLtL3kPIPhdaOaA&ved=0ahUKEwiVqoat_9uDAxXSO0QIHQWrAw0Q4dUDCBA&uact=5&oq=google+color+picker&gs_lp=Egxnd3Mtd2l6LXNlcnAiE2dvb2dsZSBjb2xvciBwaWNrZXIyChAAGEcY1gQYsAMyChAAGEcY1gQYsAMyChAAGEcY1gQYsAMyChAAGEcY1gQYsAMyChAAGEcY1gQYsAMyChAAGEcY1gQYsAMyChAAGEcY1gQYsAMyChAAGEcY1gQYsAMyDRAAGIAEGIoFGEMYsAMyDRAuGIAEGIoFGEMYsANI6QRQAFgAcAF4AZABAJgBAKABAKoBALgBA8gBAOIDBBgAIEGIBgGQBgo&sclient=gws-wiz-serp) is a quick one to navigate to. [HTML color codes](https://htmlcolorcodes.com/) is my personal favorite.
+
+### **Use color wheels identify color harmonies**
+
+-   Image source: [htmlcolorcodes.com](https://htmlcolorcodes.com/color-picker/)
+
+-   blue-green & red-orange are complementary and therefore offer the strongest possible contrast
+
+-   Find descriptions of [blue-green](https://htmlcolorcodes.com/colors/blue-green/) & [red-orange](https://htmlcolorcodes.com/colors/red-orange/) on [htmlcolorcodes.com](https://htmlcolorcodes.com/)
+
+### **Hues have associated meaning**
+
+We associate meaning with different hues (e.g. cold / sad = blue, hot / angry = red), and *importantly,* these **associations can differ among cultures**.
+
+-   Source for image in slide: [Information is Beautiful](https://informationisbeautiful.net/visualizations/colours-in-cultures/)
+
+**Some associations span multiple cultures**
+
+-   <https://samanthacsik.github.io/EDS-240-data-viz/slides/week5.2-colors-slides.html#/multicultural-colors>
+
+-   red-blue color rug visualization example
+
+    -   Source: Ed Hawkins [(showyourstripes.info)](https://showyourstripes.info/)
+
+### **Colors elicit emotional responses**
+
+-   “lightness, brightness, and saturation can communicate the level of seriousness, intensity, and emotional weight in a visual work” ([Cédric Scherer](https://www.cedricscherer.com/2021/06/08/colors-and-emotions-in-data-visualization/))
+
+Examples:
+
+-   [The Great British Bake Off \| Race to the Top](https://github.com/cararthompson/tidytuesdays?tab=readme-ov-file#2022-09---gbbo), by [Cara Thompson](https://www.cararthompson.com/) ([source code](https://github.com/cararthompson/tidytuesdays/blob/main/scripts/202210_gbbo.R))
+
+-   [The LEGO Color Explosion](https://github.com/z3tt/TidyTuesday?tab=readme-ov-file#202236--lego-database-by-rebrickable), by [Cédric Scherer](https://www.cedricscherer.com/) ([source code](https://github.com/z3tt/TidyTuesday/blob/main/R/2022_36_LEGO_bricks.qmd))
+
+-    [COVID-19 tracker](https://coronavirus.jhu.edu/map.html) by the Johns Hopkins University (screenshot from 2020-07-27, courtesy of [Cédric Scherer](https://www.cedricscherer.com/2021/06/08/colors-and-emotions-in-data-visualization/)). Red tends to elicit panic / fear.
+
+-   A map of confirmed COVID-19 cases by Datawrapper (screenshot from 2020-07-27, courtesy of [Cédric Scherer](https://www.cedricscherer.com/2021/06/08/colors-and-emotions-in-data-visualization/)). Blues and greens help to avoid such a strong fearful emotional response.
+
+darker, morbid colors carry more emotional weight
+
+> “We show the **current or confirmed cases in another color than red**. The coronavirus is **not a death sentence**. Most infected people will survive. If you’re infected, you want to find yourself on a map as a blue (or yellow, or beige, or purple…) dot, not as a “attention, danger, run!”-screaming red dot. **Related, we show deaths in black, not red – it feels more respectful**.”
+
+\- Lisa Charlotte Muth in [17 (or so) responsible live visualizations about the coronavirus, for you to use](https://blog.datawrapper.de/coronaviruscharts/), published March 3, 2020
+
+NYT full spread image when we hit 1M covid deaths
+
+Learn more about this award-winning visualization in an interview with Carrie Mifsud: [Capturing One Million Deaths on a Page: A Chat with NYT’s Carrie Mifsud](https://nightingaledvs.com/capturing-one-million-deaths-on-a-page-carrie-mifsud/)
+
+### **Using pure hues can be overwhelming, use more subdued colors instead**
+
+Though it may be temping to use bright / bold colors to grab attention, it can lead to eye strain and make it more challenging for your readers to focus on your chart.
+
+-   example Image source: [5 pitfalls to avoid when working with color in data visualization](https://flourish.studio/blog/color-in-data-visualization/)
+
+### **A few approaches for subduing a pure hue**
+
+1.   **adjust the saturation** (i.e. the level of intensity of a color)
+2.   **adjust value**: tint (add white), tone (add gray), or shade (add black)
+3.  **increase transparency** (e.g. using the `alpha` argument)
+
+-   Saturation adjusted using the HSL (Hue, Saturation, Lightness) color model. Read about [HSL vs HSV color models](https://en.wikipedia.org/wiki/HSL_and_HSV#:~:text=HSL%20stands%20for%20hue%2C%20saturation,hue%2C%20saturation%2C%20and%20intensity.) if you want a deeper dive.
+
+-   The default chroma for ggplots is set to 100%
+
+-   Use `scale_*_hue()` to adjust chroma (saturation)
+
+    -   `scale_*_hue()` uses colors based on the [HCL color model](https://en.wikipedia.org/wiki/HCL_color_space).
+
+Tint:
+
+-   The default lightness for ggplots is set to 65%
+
+-   Use `scale_*_hue()` to adjust lightness / darkness
+
+`scale_*_hue()` uses colors based on the [HCL color space](https://en.wikipedia.org/wiki/HCL_color_space). The default lightness value of 65(%) is good for filled areas but may be a bit light for points and lines.
+
+Opacity:
+
+-   reducing can help make things more legible (alpha argument)
+
+### **Building your own color palette**
+
+Be sure to consider what we’ve already discussed:
+
+-   ensure that you’re picking colorblind-friendly color combos
+
+-   use color wheels to identify color harmonies
+
+-   think carefully about what emotions / messages your color choices will convey
+
+-   avoid lots of pure / fully-saturated hues
+
+And also consider some other important sources of inspiration:
+
+-   your company or organization’s brand / logo
+
+-   steal colors from your favorite / relevant images using tools like [Color Thief](https://lokeshdhakar.com/projects/color-thief/)
+
+-   use a randomized palette generator, like [coolers.co](https://coolors.co/?home)
+
+### **Some common functions for scaling colors**
+
+**For qualitative (categorical) data** ![A qualitative color scale with 5 distinct colors: dark blue, medium blue, yellow, orange, red.](https://samanthacsik.github.io/EDS-240-data-viz/slides/images/week5/qualitative.png){alt="A qualitative color scale with 5 distinct colors: dark blue, medium blue, yellow, orange, red." width="249"} **:**
+
+-   `scale_*_manual()`
+
+**For quantitative (numeric) data:**
+
+Unclassed palettes ![An unclassed sequential color scale which transitions from light to dark blue moving left to right.](https://samanthacsik.github.io/EDS-240-data-viz/slides/images/week5/unclassed-seq.png){alt="An unclassed sequential color scale which transitions from light to dark blue moving left to right." width="293"} :
+
+-   `scale_*_gradient()`: creates a two color gradient (low-high)
+
+-   `scale_*_gradient2()`: creates a diverging color gradient (low-mid-high)
+
+-   `scale_*_gradientn()`: creates a n-color gradient
+
+Classed palettes ![A classed sequential color scale with 5 binned colors ranging from light blue on the left to dark blue on the right.](https://samanthacsik.github.io/EDS-240-data-viz/slides/images/week5/classed-seq.png){alt="A classed sequential color scale with 5 binned colors ranging from light blue on the left to dark blue on the right."} :
+
+-   `scale_*steps()`: creates a two color binned gradient (low-high)
+
+-   `scale_*_steps2()`: creates a diverging binned color gradient (low-mid-high)
+
+-   `scale_*_stepsn()`: creates a n-color binned gradient
+
+**Use the `fill` variant of the above functions for areas, bars, etc. and the `color` variant for points, lines, etc.**
+
+**Tip: Save your palette outside of your ggplot:**
+
+"I recommend saving your palette to a named vector *outside* of your ggplot – this prevents lengthy palettes from creating cluttered ggplot code *and* allows you to reuse your palette across multiple plots"
+
+```{r}
+my_palette <- c("#32DE8A", "#E36414", "#0F4C5C")
+```
+
+Here, we scale our colors for a categorical variable (species) using `scale_color_manual()`:
+
+```{r}
+cat_color_plot +
+  scale_color_manual(values = my_palette)
+```
+
+### **Tip: Set color names** 
+
+We should always be consistent with our colors. **E.g. if Gentoo penguins are blue in one plot, they should be blue in all plots.** Notice that our colors don’t “stick” with the species they represent, but rather they’re applied in the order that they appear in our palette:
+
+```{r}
+# Adelie, Chinstrap & Gentoo penguins
+ggplot(penguins, aes(x = bill_length_mm, y = bill_depth_mm, color = species)) +
+  geom_point(size = 4, alpha = 0.8) +
+  scale_color_manual(values = my_palette)
+
+# Just Adelie & Gentoo penguins
+penguins |> 
+  filter(species != "Chinstrap") |> 
+  ggplot(aes(x = bill_length_mm, y = bill_depth_mm, color = species)) +
+  geom_point(size = 4, alpha = 0.8) +
+  scale_color_manual(values = my_palette)
+```
+
+Setting the names of our vector elements (colors) ensures that they stick with those factor levels across all of our visualizations:
+
+```{r}
+my_palette_named <- c("Adelie" = "#32DE8A",
+                      "Chinstrap" = "#E36414",
+                      "Gentoo" = "#0F4C5C")
+```
+
+```{r}
+# Adelie, Chinstrap & Gentoo penguins
+ggplot(penguins, aes(x = bill_length_mm, y = bill_depth_mm, color = species)) +
+  geom_point(size = 4, alpha = 0.8) +
+  scale_color_manual(values = my_palette_named)
+
+# Just Adelie & Gentoo penguins
+penguins |> 
+  filter(species != "Chinstrap") |> 
+  ggplot(aes(x = bill_length_mm, y = bill_depth_mm, color = species)) +
+  geom_point(size = 4, alpha = 0.8) +
+  scale_color_manual(values = my_palette_named)
+```
+
+### **Tip: modify df to apply colors to observations**
+
+The [`scale_*_identity()` functions](https://ggplot2.tidyverse.org/reference/scale_identity.html) allows you to map aesthetic values from your data frame to individual points. They will not produce a legend unless specified using `guide = "legend"`.
+
+```{r}
+test <- penguins |> 
+  mutate(
+    my_color = case_when(
+      bill_length_mm < 40 ~ "#D7263D", # smaller than 40, this color
+      between(bill_length_mm, 40, 50) ~ "#E4BB87", # in between this range, this color
+      bill_length_mm > 50 ~ "#386150" #  bigger than 50, this color
+      
+    )
+  )
+```
+
+```{r}
+penguins |> 
+  mutate(
+    my_color = case_when(
+      bill_length_mm < 40 ~ "#D7263D",
+      between(bill_length_mm, 40, 50) ~ "#E4BB97",
+      bill_length_mm > 50 ~ "#386150"
+    )
+  ) |> 
+  ggplot(aes(x = bill_length_mm, y = bill_depth_mm, color = my_color)) +
+  geom_point(size = 4, alpha = 0.7) +
+  scale_color_identity()
+
+
+penguins |> 
+  mutate(
+    my_color = case_when(
+      body_mass_g > 6000 ~ "#D7263D", # body mass > 6k, be this color
+      TRUE ~ "gray50" # everything else, be this color
+    )
+  ) |> 
+  ggplot(aes(x = bill_length_mm, y = bill_depth_mm, color = my_color)) +
+  geom_point(size = 4, alpha = 0.8) +
+  scale_color_identity(guide = "legend", 
+                       # if we don't update the name and labels, it'll set the labels to
+                       # colornames (values in my_color column)
+                       name = "Body mass (g)", labels = c(">6000", "<= 6000"))
+
+```
+
+**Create your own palettes!**
+
+Create your own palettes and use them to scale colors in the plots below:
+
+```{r}
+
+
+ggplot(penguins, aes(x = bill_length_mm, y = bill_depth_mm, color = species)) +
+  geom_point(size = 4, alpha = 0.8) 
+
+
+ggplot(penguins, aes(x = bill_length_mm, y = bill_depth_mm, color = body_mass_g)) +
+  geom_point(size = 4, alpha = 0.8) 
+```
+
+------------------------------------------------------------------------
+
+There are also some additional rules / guidelines that you should pretty much always abide by when selecting colors
+
+### Additional Rules
+
+**High saturation = greater / more important values**
+
+-   It’s okay to use saturated / brighter colors in moderation.
+
+-   *We tend to associate **more saturated** colors with **greater values**.*
+
+**No more than 7 colors**
+
+-   If you need more than seven colors, consider alternative chart types.
+
+**Use colors consistently**
+
+-   Ensure consistent use of colors across multiple visualizations that display the same groups.
+
+**Explain what your colors encode**
+
+-   Always include a color key, in the form of a traditional legend or otherwise.
+
+**Highlight important values**
+
+-   Use gray for less important groups / values, annotations, contextual information, etc.
+
+**Be predictable in your color choices**
+
+-   Use intuitive colors (e.g. green for forest, blue for water) but avoid stereotypes (e.g. pink for women, blue for men).
+
+-   Try a cold color for men (e.g. blue or purple) and a warmer color for women (e.g. yellow, orange or a warm green).
+
+-   *Example from [What to consider when choosing colors for data visualization](https://blog.datawrapper.de/colors/), by Lisa Charlotte Muth*
+
+**Bright = low, dark = high**
+
+(especially for maps)
+
+-   In most cases, readers will associate bright colors with lower values and darker colors with higher values. Build gradients accordingly.
+
+**Except in some cases. . .**
+
+> “humans perceive bright colors on elevation maps to represent a high altitude, with darker colors representing naturally low-lying and shady areas like valley” (Cédric Scherer, [Colors and Emotions in Data Visualization](https://www.cedricscherer.com/2021/06/08/colors-and-emotions-in-data-visualization/#:~:text=Dark%20and%20saturated%20colors%20are,perceived%20differently%20in%20different%20cultures.))
+
+-   Filled contour plot of Mt. Shasta. Image source: [EarthLab](https://www.earthdatascience.org/tutorials/visualize-digital-elevation-model-contours-matplotlib/)
+
+-   USGS Digital Elevation Model of Pohnpei (Micronesia). Image source: [PacIOOS](https://www.pacioos.hawaii.edu/voyager-news/digital-elevation-models/)
+
+**Gradient palettes for continuous data only**
+
+-   Most readers will associate dark colors with “high / important” and bright or light colors with “low / less”. Using a gradient palette with categorical data may imply a ranking of categories where there shouldn’t be.
+
+**Use lightness, not just hue, to build gradients**
+
+-   Gradients should also work in black and white.
+
+**Two hues are sometimes better than one**
+
+-   Readers are generally better able to distinguish colors on a gradient better if they are encoded through both lightness and two (sometimes three) carefully-selected hues.
