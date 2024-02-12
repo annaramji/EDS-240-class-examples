@@ -223,7 +223,7 @@ We’ve landed on a **diverging color palette**, but should we use a classed (ak
 
 **Use a classed color scale if you want to communicate statistical brackets:**
 
-![A classed color scale with 5 binned colors ranging from dark green on the left to dark red on the right.](https://samanthacsik.github.io/EDS-240-data-viz/slides/images/week5/classed.png){alt="A classed color scale with 5 binned colors ranging from dark green on the left to dark red on the right." width="392"}
+![A classed color scale with 5 binned colors ranging from dark green on the left to dark red on the right.](https://samanthacsik.github.io/EDS-240-data-viz/slides/images/week5/classed.png){width="392"}
 
 -   the focus is on which data units fall into pre-defined classes, rather than overall pattern
 
@@ -231,8 +231,172 @@ We’ve landed on a **diverging color palette**, but should we use a classed (ak
 
 -   the more classes you have, the more nuanced your map becomes
 
-**Use an unclassed color scale if you want to show general patterns:** ![An unclassed color scale with colors that smoothly transition from dark green on the left to dark red on the right.](https://samanthacsik.github.io/EDS-240-data-viz/slides/images/week5/unclassed.png){alt="An unclassed color scale with colors that smoothly transition from dark green on the left to dark red on the right." width="393" height="34"}
+**Use an unclassed color scale if you want to show general patterns:**
+
+![An unclassed color scale with colors that smoothly transition from dark green on the left to dark red on the right.](https://samanthacsik.github.io/EDS-240-data-viz/slides/images/week5/unclassed.png){alt="An unclassed color scale with colors that smoothly transition from dark green on the left to dark red on the right." width="393" height="34"}
 
 -   the focus is on general patterns, rather than which statistical brackets regions fall into
 
 -   best if you don’t want to interpret for your reader – it makes it easier to see outliers, transitions to and comparisons with neighboring regions
+
+## **Start with an unclassed scale**
+
+> "The unclassed choropleth is the most exact representation of the data model possible,”
+>
+> \- Judith A. Tyner, in [Priciples of Map Design](https://www.amazon.com/Principles-Map-Design-Judith-Tyner/dp/1462517129)
+
+> “No matter if you decide for a classed map at the end, you should **start your process by looking at an unclassed map**. This will help you see subtle differences between regions and make a conscious decision if and how you should simplify them.”
+>
+> -Lisa Charlotte Muth, in [When to use classed and when to use unclassed color scales](https://blog.datawrapper.de/classed-vs-unclassed-color-scales/)
+
+We'll heed this advice and start with an unclassed plot!
+
+### Pick a color scale
+
+Recall [from earlier](https://samanthacsik.github.io/EDS-240-data-viz/slides/week5.2-colors-slides.html#/suggested-colors) that precipitation data is often encoded using a **brown / blue** color scheme (with drier conditions falling on the brown side and wetter conditions falling on the blue side).
+
+Lucky for us, **RColorBrewer** has this exact palette. **Let’s use all 11 hues for our unclassed map**:
+
+-   Preview the palette using `display.brewer.pal()` with our desired number of hues:
+
+```{r}
+RColorBrewer::display.brewer.pal(n = 11, name = "BrBG")
+```
+
+-   Save the HEX codes to a named object using `brewer.pal()` (we’ll call this in our plot later):
+
+```{r}
+my_brew_pal_11 <- RColorBrewer::brewer.pal(n = 11, name = "BrBG")
+```
+
+## **Apply our palette & adjust colorbar**
+
+Here, we leverage the awesome `{scales}` package to add **%s** to the colorbar labels and set our breaks. We also use `guides()` + `guide_colorbar()` to update label positioning and colorbar size:
+
+```{r}
+base_map +
+  scale_fill_gradientn(colors = my_brew_pal_11,
+                       # number each value is multiplied by
+                       labels = scales::label_percent(scale = 1), 
+                        # add more tick marks to make it easier to read
+                       # width = units between each tick mark 
+                       breaks = scales::breaks_width(width = 10)) +
+  
+  guides(fill = guide_colorbar(barwidth = 15, barheight = 0.75))
+```
+
+Our color mapping may be misleading
+
+-   **0%** (i.e. no change between 5-year precipitation and 20th century average) **is currently on the bluer side of our color scale**, rather than on the off-white color that’s at the center of our palette.
+
+-   As a result, **our map may be misleading** – it would appear as if more counties received higher-than-average precipitation than in actuality.
+
+**Rescale the colorbar so that 0 is at the center**
+
+-   `scales`:: to the rescue again!
+
+```{r}
+base_map +
+  scale_fill_gradientn(colors = my_brew_pal_11,
+                       labels = scales::label_percent(scale = 1),
+                       breaks = scales::breaks_width(width = 10),
+                  # rescale to make it from min, to 0, to max
+                  # need at least min and max, but we want to specify that midpoint
+                  # takes a vector of values
+                       values = scales::rescale(x = c(
+                         # just min(joined_precip_geom$perc_change) returns an NA because connecticut is missing data (weird county reclassifying happened, non-aligned overlap b/w boundaries so we just omitted it)
+                         # wrap dataframe in na.omit
+                         min(na.omit(joined_precip_geom)$perc_change), 
+                         0,
+                         max(na.omit(joined_precip_geom)$perc_change)
+                       ))
+                         ) +
+  guides(fill = guide_colorbar(barwidth = 15, barheight = 0.75))
+```
+
+-   important to check your colors, see what they're representing, mapping
+
+## Classed Map
+
+### **Modify our palette for our classed map**
+
+We’ll be using the same color palette for our classed map, but this time, **let’s keep 10 hues (this will drop the middle-most off-white hue)**:
+
+```{r}
+# preview palette
+RColorBrewer::display.brewer.pal(n = 10, name = 'BrBG')
+
+# save hex codes
+my_brew_pal_10 <- RColorBrewer::brewer.pal(n = 10, name = 'BrBG')
+my_brew_pal_10
+```
+
+-   By dropping the off-white hue, we can construct our scale so that **0%** sits at the break point between brown and blue shades – any county that received more than the historical average will be a shade of blue, and any that received less will be a shade of brown.
+
+## 
+
+**By default, our resolution is pretty low**
+
+We only get 4 bins by default, which means we lose a lot of detail in our map:
+
+```{r}
+base_map + 
+  # scale_fill_stepsn steps let us create binned color scales
+  scale_fill_stepsn(colors = my_brew_pal_10,
+                    labels = scales::label_percent(scale = 1)) +
+  # guide_colorsteps to match our scaling function above
+  guides(fill = guide_colorsteps(barwidth = 25, barheight = 0.75))
+```
+
+### More classes = more nuance
+
+```{r}
+base_map +
+  scale_fill_stepsn(colors = my_brew_pal_10,
+                    labels = scales::label_percent(scale = 1),
+                    # define width of each of our bins
+                    breaks = scales::breaks_width(width = 10)) + # every 10 units
+  guides(fill = guide_colorbar(barwidth = 25, barheight = 0.75))
+
+```
+
+-   still not showing all of our 10 colors
+
+-   0 color is not even really in our palette
+
+    -   it blends colors depending on nearby colors
+
+Instead, change width to 5, rescale to c( min, 0, max)
+
+```{r}
+
+base_map +
+  scale_fill_stepsn(colors = my_brew_pal_10,
+                    labels = scales::label_percent(scale = 1),
+                   # breaks = scales::breaks_width(width = 10),
+                    values = scales::rescale(x = c(
+                         min(na.omit(joined_precip_geom)$perc_change),
+                         0,
+                         max(na.omit(joined_precip_geom)$perc_change))), 
+                    breaks = scales::breaks_width(width = 5)) +
+  
+  guides(fill = guide_colorbar(barwidth = 25, barheight = 0.75))
+```
+
+zero now sitting at a better color value, looks pretty similar in terms of appearance w our unclassed scale
+
+-   *But* the more classes you have, the longer it will (likely) take a reader to interpret values.
+
+    -   matching color w appropriate values between map spot and binned color
+
+    -   fewer bins = easier visually, but losing the nuance of the trends (tradeoff to consider)
+
+## Unclassed vs. Classed maps
+
+What stories to each of these maps tell? When might you choose one over the other? What additional modifications might you make?
+
+Choropleths are powerful in multiples!!
+
+Several maps side-by-side can help you better spot important patterns and tell a more complete story.
+
+-   [What’s Going On in This Graph? \| New Normal U.S. Precipitation](https://www.nytimes.com/2021/09/16/learning/whats-going-on-in-this-graph-new-normal-us-precipitation.html) (New York Times)

@@ -1,0 +1,197 @@
+---
+author: "Anna Ramji"
+title: "EDS 240: Data Viz, Lecture 6.1 Typography"
+---
+
+# Typography
+
+Type and font choice influences audience perception and readability
+
+```{r}
+library("monochromeR") # a package for creating monochrome color palettes and easily converting rgba values to hex codes (and also some other useful functions)
+library("showtext") # for using fonts more easily in R graphs
+library("ggtext") # improved text rendering support for ggplot2
+library("ggrepel") # ggplot2 extension to repel overlapping labels
+library("googlesheets4") # provides an R interface to Google Sheets via the Sheets API v4
+
+library(tidyverse)
+library(here)
+library(janitor)
+```
+
+## Typeface vs. Font
+
+-   [**Typeface**](https://fonts.google.com/knowledge/glossary/typeface) **(aka font family)**: underlying visual design (e.g. Times New Roman, Helvetica, Roboto)
+
+    -   **You choose a *typeface* (e.g. [Nunito](https://fonts.google.com/specimen/Nunito?query=nunito))**
+
+-   [**Font**](https://fonts.google.com/knowledge/glossary/font): an implementation of a typeface; they can come in different weights and styles (e.g. bold, italic)
+
+    -   **You use a *font* (e.g.** regular, *italic*, **bold)**
+
+### **Typeface choices affect emotions and perceptions**
+
+Example: Source: [The Daily Egg](https://www.crazyegg.com/blog/psychology-of-fonts-infographic/)
+
+> *“Typography is the art and technique of arranging type to make written language legible, readable and appealing when displayed.”*
+>
+> \- [Wikipedia](https://en.wikipedia.org/wiki/Typography)
+
+-   Similar to colors, typefaces / fonts influence the how viewers perceive information (check out this short [TEDx talk](https://www.youtube.com/watch?v=OXc-VZ4Vwbo)).
+
+Want to dive deeper into the world of typography? Start with this quick read, [Why care about typography?](https://fonts.google.com/knowledge/introducing_type/why_care_about_typography) and explore other great articles by [Google Fonts](https://fonts.google.com/knowledge).
+
+**Context** **matters** – **choose typeface accordingly**
+
+Typefaces and fonts communicate beyond more than just the written text – they can **evoke emotions** and can be used to **better connect your audience with your work**.
+
+-   example - Source: [Typography for a better user experience](https://www.suvoray.com/notes/typography-for-a-better-user-experience), by [Suvo Ray](https://www.suvoray.com/)
+
+-   Interested in font pyschology? Check out this [short video](https://www.youtube.com/watch?v=6Jlo9iOZvXY&t=65s) and [this article](https://designmodo.com/font-psychology/#:~:text=Serif%20fonts%20can%20evoke%20feelings,modernity%2C%20simplicity%2C%20and%20clarity.) to learn a bit more.
+
+### When in doubt, use sans-serif fonts
+
+**Serif fonts** have small decorative lines (aka “tails” or “feet”) that extend off characters while **sans serif fonts** don’t.
+
+-   **Sans-serif** fonts = **cleaner** and easier to read.
+
+    -   [Roboto](https://fonts.google.com/specimen/Roboto), [Lato](https://fonts.google.com/specimen/Lato), [Open Sans](https://fonts.google.com/specimen/Open+Sans) are good, free options
+
+```{=html}
+<!-- -->
+```
+-   **Serif** fonts = classy / traditional / professional / serious tone; typically only used for **visualization headlines**
+
+    -   If your organization uses a serif font, consider using it in your visualization’s headline
+
+*Example from [Which fonts to use for your charts and tables](https://blog.datawrapper.de/fonts-for-data-visualization/), by Lisa Charlotte Muth*
+
+#### **Use a typeface with lining figures for numerals**
+
+Different typefaces display numbers differently. Serif fonts tend to have “oldstyle figures”, which extend above and below the “line” – these can be difficult to read in a visualization.
+
+**Instead, look for options with lining figures, where numbers “line up”, i.e. they’re all the same height.**
+
+#### **Use a monospaced typeface for numerals**
+
+Typefaces with **tabular figures** print **every character with equal width** – you may see these referred to as **monospaced** typefaces. These work well in tables, visualizations, or any scenario where figures should line up vertically (see how you can quickly identify how many figures a number has in the table on the right, below).
+
+-   *Examples from [Which fonts to use for your charts and tables](https://blog.datawrapper.de/fonts-for-data-visualization/), by Lisa Charlotte Muth* & [Understanding numerals](https://fonts.google.com/knowledge/introducing_type/understanding_numerals#when-to-use-tabular-lining-numerals) article by Google Fonts
+
+#### **Use a typeface with all the symbols you need**
+
+Confirm that all symbols (aka **glyphs**) that you need exist *and* that they look good for your chosen typeface.
+
+Consider special characters for different languages, currency symbols, math symbols, reference marks, sub / superscript numbers, etc.
+
+## 
+
+#### **Use bold fonts for emphasis only**
+
+**Most typefaces come with fonts for different weights** (Google Fonts uses numbers for font weights – extra light (200), light (300), regular (400, default), medium (500), semi bold (600), bold (700), extra bold (800)).
+
+**Use bold text for titles or to emphasize a few words in annotations.** Regular or medium weights are often easiest for longer text (descriptions, annotations, notes).
+
+#### **Avoid really thin fonts**
+
+Thin (light-weight fonts) fonts are hard to read. **Only use them in a high-contrast color and in large sizes** (often, titles are the only place you’ll want to use think fonts.)
+
+#### **Ensure your font size is large enough**
+
+**Make sure your font size is large enough, especially when presenting visualizations in a slide-based presentation** (this oftentimes means increasing it larger than you would have it in print). In ggplot, adjust font sizes using `theme()`.
+
+#### **Use high-contrast color for most text**
+
+[Web Content Accessibility Guidelines](https://www.w3.org/TR/WCAG21/#:~:text=Web%20Content%20Accessibility%20Guidelines%20(WCAG)%202.1%20defines%20how%20to%20make,%2C%20learning%2C%20and%20neurological%20disabilities.) (WCAG) recommends **a minimum contrast ratio of 4.5:1** – use a [color contrast checker](https://userway.org/contrast/?fg=000000&bg=ffffff) to check your ratio (e.g. here is a color combo with a [good contrast ratio](https://userway.org/contrast/?fg=272F75&bg=ffffff) and a combo with a [bad contrast ratio](https://userway.org/contrast/?fg=5CDC8D&bg=ffffff)).
+
+#### **Use UPPERCASE text sparingly**
+
+Uppercase text is more difficult to read compared to sentence case – **limit use to headlines or labels**. Region labels on maps are commonly uppercase (e.g. see maps in these New York Times pieces, [How to Think About Ukraine, in Maps and Charts](https://www.nytimes.com/interactive/2022/02/25/opinion/russia-ukraine-invasion-maps.html) and [Closing the Back Door to Europe](https://www.nytimes.com/interactive/2015/09/15/world/europe/migrant-borders-europe.html)).
+
+### **Typographic hierarchy** 
+
+**No one wants to read a wall of text.** You can use font size, style, color, spacing, and typeface (or combinations of these) to create a hierarchy that guide your readers.
+
+-   example Source: [The UX Designer’s Guide to Typography](https://www.interaction-design.org/literature/article/the-ux-designer-s-guide-to-typography)
+
+## Recap: choosing the right typeface(s0) & font(s)
+
+-   **context matters** – the type(s) should fit the topic and audience
+
+```{=html}
+<!-- -->
+```
+-   when in doubt, **use a sans-serif style**
+
+-   choose a **monospaced** typeface with **lining figures** for numbers
+
+-   ensure that your chosen typeface **has all the symbols you need *and* that they look okay**
+
+-   use **bold fonts for emphasis** and **avoid thin fonts**
+
+-   make **font sizes large enough** to easily read
+
+-   use **high-contrast** font colors
+
+-   strategically use types & fonts to **create hierarchy**
+
+-   avoid (extensively) using **ALL CAPS**
+
+**Avoid using too many typefaces (stick to just 1-3)**
+
+There are *lots* of excellent resources out there for choosing the right typeface / font check out the [resources page](https://samanthacsik.github.io/EDS-240-data-viz/resources.html#typography) on the course website for some recommendations.
+
+Examples:
+
+-   Horror Movies, by [Cristophe Nicault](https://www.christophenicault.com/) ([source code](https://github.com/cnicault/tidytuesday/blob/master/2022/2022-44-horror-movies/horror_movies.qmd))
+
+-   HBCUs, by [Ijeamaka Anyene](https://ijeamaka-anyene.netlify.app/) ([source code](https://github.com/Ijeamakaanyene/tidytuesday/blob/master/scripts/2021_04_hbcu.Rmd))
+
+-   R-Ladies Chapter Events, by [Nicola Rennie](https://ijeamaka-anyene.netlify.app/) ([source code](https://github.com/nrennie/tidytuesday/tree/main/2023/2023-11-21)) \| Font inspired by [R-Ladies Global](https://rladies.org/)
+
+## **The problem with system fonts**
+
+A [**system font**](https://fonts.google.com/knowledge/glossary/system_font_web_safe_font) **is one that’s already assumed to be on the vast majority of users’ devices**, with no need for a web font to be downloaded.
+
+There are **only three system fonts that are guaranteed to work everywhere**: **sans** (the default), **serif**, or **mono**. Use the `family` argument to specify which font family you’d like to use for a particular text element, and use the `face` argument to specify font face (**bold**, *italic*, plain (default)):
+
+```{r}
+library(palmerpenguins)
+library(tidyverse)
+
+ggplot(penguins, aes(x = bill_length_mm, y = bill_depth_mm)) +
+  geom_point() + 
+  labs(title = "This title is serif font",
+       subtitle = "This subtitle is mono font",
+       x = "This axis label is sans font (default)",
+       y = "This axis is also sans font (default)") +
+  theme(
+    plot.title = element_text(family = "serif", size = 30),
+    plot.subtitle = element_text(family = "mono", size = 25),
+    axis.title = element_text(family = "sans", size = 22),
+    axis.text.x = element_text(family = "serif", face = "bold", size = 18),
+    axis.text.y = element_text(family = "mono", face = "italic", size = 18)
+    )
+```
+
+**A graphics device (GD) is something used to make a plot appear** – everytime you create a plot in R, it needs to be sent to a specific GD to be rendered. There are two main device types:
+
+1.  **screen devices:** the most common place for your plot to be “sent” – whenever our plot appears in a window on our computer screen, it’s being sent to a screen device; different operating systems (e.g. Mac, Windows, Linux) have different screen devices
+
+-   **file devices:** if we want to write (i.e. save) our plot to a file, we can send our plot to a particular file device (e.g. pdf, png, jpeg)
+
+**Unfortunately, text drawing is handled differently by each graphics device**, which means that if we want a font to work everywhere, we need to configure all these different devices in different ways.
+
+-   Read a bit more about graphics devices in [Chapter 8](https://bookdown.org/rdpeng/exdata/graphics-devices.html) of [Exploratory Data Analysis with R](https://bookdown.org/rdpeng/exdata/), by [Roger Peng](https://rdpeng.org/)
+
+**R packages to the rescue!!**
+
+Fortunately, there are a couple super handy packages that make working with fonts relatively painless:
+
+-   [`{showtext}`](https://github.com/yixuan/showtext)
+
+-   [`{extrafont}`](https://github.com/wch/extrafont)
+
+**We’ll be using `{showtext}`** for a couple reasons: it supports more file formats *and* more graphics devices, and it also avoids using external software (`{extrafont}` requires that you install some additional software and packages first). `{showtext}` makes is *super* easy to import and use [Google Fonts](https://fonts.google.com/).
+
+[Albert Rapp](https://albert-rapp.de/posts/ggplot2-tips/08_fonts_and_icons/08_fonts_and_icons.html) and [Nicola Rennie](https://nrennie.rbind.io/blog/adding-social-media-icons-ggplot2/) both have written great blog posts on using `{showtext}`. These materials draw from both their work!
