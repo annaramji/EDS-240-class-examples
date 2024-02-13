@@ -1,0 +1,320 @@
+---
+author: "Anna Ramji"
+date: 2024-02-12
+title: "EDS 240: Data Viz; Lecture 6.1 Annotations"
+---
+
+# Annotations
+
+<https://samanthacsik.github.io/EDS-240-data-viz/slides/week6.2-annotations-slides.html#/1>
+
+Starting off by looking at an example data viz
+
+-   **Source:** [Arctic Ice Reaches a Low Winter Maximum](https://www.nytimes.com/interactive/2015/03/24/science/earth/arctic-ice-low-winter-maximum.html?_r=0) (New York Times).
+
+Also check out this great commentary on the above visualization, [Respect your readers’ time](https://blog.datawrapper.de/readers-time/) (DataWrapper)
+
+-   **Source:** [2023 confirmed as world’s hottest year on record](https://www.bbc.com/news/science-environment-67861954) (BBC)
+
+-   **Source:** [What is climate change? A really simple guide](https://www.bbc.com/news/science-environment-24021772) (BBC)
+
+### **Why annotate?**
+
+------------------------------------------------------------------------
+
+-   clarify meaning / significance of data (especially particular data points or groups)
+
+-   facilitate interpretation
+
+-   build a narrative
+
+The average attention span of an internet user is [\~8 seconds](https://www.linkedin.com/pulse/shrinking-attention-span-online-users-what-means-your-avinash-sharma/) (shorter than a goldfish!). It’s imperative that we respect our readers’ time.
+
+**Aim to:**
+
+-   tell your readers what you want them to see
+
+-   guide your readers eyes & attention
+
+-   remind your readers what they’re looking at
+
+The more time you spend making your visualization crystal clear, the more time you save your readers needing to decipher it.
+
+Read these two *great* posts: [What to consider when using text in data visualizations](https://blog.datawrapper.de/text-in-data-visualizations/) & [Respect your readers’ time](https://blog.datawrapper.de/readers-time/), both by Lisa Charlotte Muth
+
+**We’ll be annotating these plots**
+
+-   **Metabolism Effects on Foraging Across Temperatures**
+
+    -   Adapted from [Csik et al. 2023](https://doi.org/10.3389/fmars.2023.1072807), [Figure 5](https://www.frontiersin.org/files/Articles/1072807/fmars-10-1072807-HTML/image_m/fmars-10-1072807-g005.jpg)
+
+-   Mono Lake Levels
+
+    -   Borrowed from Allison Horst’s [Customized Data Visualization in `{ggplot2}`](https://allisonhorst.github.io/eds221-day8-comp/data_viz.html) materials
+
+These two plots (and likely many others that you’ll create moving forward) will benefit from some custom annotations.
+
+## 
+
+**Lobster plot starter code**
+
+------------------------------------------------------------------------
+
+Note that this starter code incorporates many of the strategies we’ve discussed in past lectures: turning a theme into a function, creating a color palette (and also point shape and size scales), and axis labels outside of the ggplot code, and using `{ggtext}` to apply markdown to plot text:
+
+```{r}
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+##                                    setup                                 ----
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+#.........................load libraries.........................
+library(tidyverse)
+
+#..........................read in data..........................
+
+# read in Google Sheet ----
+lobs <- googlesheets4::read_sheet("https://docs.google.com/spreadsheets/d/1DkDVcl_9rlaqznHfa_v1V1jtZqcuL75Q6wvAHpnCHuk/edit#gid=2143433533") |>
+  mutate(temp = as.factor(temp))
+
+# alternatively, read in csv file ----
+# lobs <- read_csv(here::here("week6", "data", "metabolism-foraging-data.csv")) |>
+#   mutate(temp = as.factor(temp))
+
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+##                            create lobster plot                           ----
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+#..........................create theme..........................
+lob_theme <- function(){
+  theme_light() +
+    theme(
+      axis.title.x = ggtext::element_markdown(size = 13,
+                                              margin = margin(t = 1, r = 0, b = 0, l = 0, unit = "lines")),
+      axis.title.y = ggtext::element_markdown(size = 13,
+                                              margin = margin(t = 0, r = 1, b = 0, l = 0, unit = "lines")),
+      axis.text = element_text(color = "black", size = 12),
+      panel.border = element_rect(colour = "black", linewidth = 0.7),
+      panel.grid = element_blank(),
+      legend.title = element_text(size = 11),
+      legend.text = element_text(size = 10),
+      legend.position = c(0.95, 0.95),
+      legend.justification = c(0.95, 0.95),
+      legend.box.background = element_rect(color = "black", linewidth = 1.1)
+
+    )
+}
+
+#..........................create scales.........................
+lob_palette <- c("11" = "#7B8698",
+                 "16" = "#BAD7E5",
+                 "21" = "#DC7E7C",
+                 "26" = "#7D3E40")
+
+lob_shapes <-  c("11" = 15,
+                 "16" = 16,
+                 "21" = 17,
+                 "26" = 18)
+
+lob_sizes <- c("11" = 6,
+               "16" = 6,
+               "21" = 6,
+               "26" = 7)
+
+#........................create plot text........................
+x_axis_lab <- glue::glue("Resting Metabolic Rate<br>
+                         (mg O<sub>2</sub> kg<sup>-1</sup> min<sup>-1</sup>)")
+
+y_axis_lab <- glue::glue("Maximum Consumption Rate<br>
+                         (prey consumed predator<sup>-1</sup> 24hr<sup>-1</sup>)")
+
+#............................plot data...........................
+lob_plot <- ggplot(lobs, aes(x = SMR, y = avg_eaten,
+                 color = temp, shape = temp, size = temp)) +
+  geom_point() +
+  scale_color_manual(values = lob_palette, name = "Temperature (ºC)") +
+  scale_shape_manual(values = lob_shapes, name = "Temperature (ºC)") +
+  scale_size_manual(values = lob_sizes, name = "Temperature (ºC)") +
+  scale_x_continuous(breaks = seq(0, 1.5, by = 0.2)) +
+  scale_y_continuous(breaks = seq(0, 35, by = 5)) +
+  labs(x = x_axis_lab,
+       y = y_axis_lab) +
+  lob_theme()
+
+lob_plot
+```
+
+## **Building custom annotations**
+
+There are two primary ways to add custom text annotations:
+
+1.  `geom_text()` (for plain text) & `geom_label()` (adds a rectangle behind text), which take aesthetics mappings; these draw the geom *once per each row of the data frame*
+
+2.  `annotate()`, which does not take aesthetics mappings and instead draws only the information provided to it
+
+Let’s try to add an annotation to our plot using both approaches to better understand the difference.
+
+**Our goal:** add a rectangle that bounds / highlights a subset of points, add text nearby that reads **Important lobsters**, and draw an arrow from the text pointing to the box.
+
+-   I’ve found the [Annotation FAQ](https://ggplot2.tidyverse.org/articles/faq-annotation.html) super helpful!
+
+**`geom_text()` + `geom_rect()` doesn’t look right . . .**
+
+------------------------------------------------------------------------
+
+Here, we use `geom_text()` + `geom_rect()` to add text and a rectangle to our plot. We need to **supply coordinates** to place each on our plot.
+
+```{r}
+lob_plot +
+  geom_text(
+    x = 0.1,
+    y = 25,
+    label = "Important lobsters",
+    size = 4,
+    color = "black",
+    hjust = "inward" # so it doesn't run off your plot space
+  ) +
+  geom_rect(
+    xmin = 0.25, xmax = 0.85,
+    ymin = 8.5, ymax = 18,
+    alpha = 0.5,
+    fill = "gray40", 
+    color = "black",
+    show.legend = FALSE # super important, otherwise all legend elements have our box around them 
+    
+  )
+```
+
+Notice that our text looks oddly blurry and bold, and our rectangle is opaque (despite adjusting `alpha`) and has a weird, thick border.
+
+-   plotting our text and box 22x on top of each other
+
+    -   note alpha argument seemingly not working
+
+-   inheriting the size aesthetic that we're mapping onto our data
+
+-   use annotate function instead!!
+
+**`geom_text()` inherits aesthetic mappings from `ggplot()`**
+
+------------------------------------------------------------------------
+
+Like all other `geom_*()` functions we’ve worked with, **`geom_text()` & `geom_label()` take aesthetic mappings**. You can either define `aes()` within the geom, *or* it’ll inherit global mappings from `ggplot()` (as in our case).
+
+Here, `geom_text()` is plotting our label (**Important lobsters**) and box 22 times each (once for each of the 22 observations in our data frame).
+
+```{r}
+str(lobs)
+```
+
+It’s also inheriting the `size` aesthetic for our box border.
+
+```{r}
+# from our `lob_plot` code
+# scale_size_manual(values = lob_sizes, name = "Temperature (ºC)") 
+```
+
+## Using `annotate()`
+
+**This is exactly the situation `annotate()` was made for**
+
+Unlike `geom_text()`, `annotate()` requires that we define a `geom` type (e.g. `"text"`, `"rect"`). We can also remove the `show.lengend` argument, since `annotate()` doesn’t produce a legend.
+
+```{r}
+lob_plot +
+  annotate(
+    geom = "text",
+    x = 0.1,
+    y = 25,
+    label = "Important lobsters",
+    size = 4,
+    color = "black",
+    hjust = "inward"
+  ) +
+  annotate(
+    geom = "rect", # like geom_rect
+    xmin = 0.25, xmax = 0.85,
+    ymin = 8.5, ymax = 18,
+    alpha = 0.5,
+    fill = "gray70", color = "black"
+  )
+```
+
+**Note:** Determining coordinates for any annotation requires a lot of trial and error. Pick values that you think are close and then tweak from there.
+
+## **Draw an arrow between our label and rectangle**
+
+------------------------------------------------------------------------
+
+We can specify the `"curve"` geom type to draw a curved line. Use the `arrow` argument + `arrow()` function to add an arrow tip on the end:
+
+```{r}
+lob_plot +
+  annotate(
+    geom = "text",
+    x = 0.1,
+    y = 25,
+    label = "Important lobsters",
+    size = 4,
+    color = "black",
+    hjust = "inward"
+  ) +
+  annotate(
+    geom = "rect", # like geom_rect
+    xmin = 0.25, xmax = 0.85,
+    ymin = 8.5, ymax = 18,
+    alpha = 0.5,
+    fill = "gray70", color = "black"
+  ) +
+  annotate(
+    geom = "curve",
+    x = 0.3, xend = 0.5, # x start and end coords
+    y = 23.8, yend = 19, # y start and end coords
+    # at this point, curve is like an l
+    curvature = -0.15, # switch curvature
+    arrow = arrow(length = unit(0.3, "cm") # updates lil wing tips of arrow
+                  )
+  )
+```
+
+## **Use `geom_text/label()` to annotate each point**
+
+`geom_text()` adds plain text
+
+```{r}
+lob_plot +
+  geom_text(aes(label = lobster_id),
+            size = 6,
+            show.legend = FALSE)
+```
+
+`geom_label()` adds a rectangle behind text
+
+```{r}
+lob_plot +
+  geom_label(aes(label = lobster_id),
+             size = 6,
+             show.legend = FALSE)
+```
+
+Annotations sit on top of data points, which may be undesirable…
+
+## **Use `{ggrepel}` to repel annotations**
+
+```{r}
+# geom_text
+lob_plot +
+  ggrepel::geom_text_repel(aes(label = lobster_id),
+                           size = 4,
+                           color = "gray10",
+                           nudge_x = 0.1, nudge_y = 0.3,
+                           arrow = arrow(length = unit(0.25, "cm")))
+
+# geom_label
+lob_plot +
+  ggrepel::geom_label_repel(aes(label = lobster_id),
+                           size = 4,
+                           color = "gray10",
+                           nudge_x = 0.1, nudge_y = 0.3,
+                           arrow = arrow(length = unit(0.25, "cm")))
+
+```

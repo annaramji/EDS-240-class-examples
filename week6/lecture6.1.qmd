@@ -454,7 +454,7 @@ plot +
 
 ```{r}
 #....................import Font Awesome fonts...................
-font_add(family = "fa-brands",
+showtext::font_add(family = "fa-brands",
          regular = here::here("fonts", "Font Awesome 6 Brands-Regular-400.otf"))
 
 # we'll refer to this as fa-regular in our font = "" in our glue("text blah blah <span style='font-family:fa-brands;'>{github_icon};</span>)  line later
@@ -610,9 +610,8 @@ We already have the correct `theme()` elements added to our plot, but we do need
 money_icon <- "&#xf3d1"
 
 subtitle <- glue::glue("Median earnings <span style='font-family:fa-regular;'>{money_icon};</span>
-                       of full-time
-                       <span style='color:#2D7787;font-size:20pt;'>**male**</span>
-                       versus <span style='color:#FC6B4B;font-size:20pt;'>**female**</span>
+                       of full-time <span style='color:#FC6B4B;font-size:20pt;'>**female**</span>
+                       versus <span style='color:#2D7787;font-size:20pt;'>**male**</span>
                        workers by occupation in 2016")
 ```
 
@@ -631,6 +630,8 @@ plot +
                               size = 25),
     
     # NEW: ggtext::element_textbox_simple
+    # enables markdown text in a box, with word wrap
+ # " provides meaningful default values for many of the values that are not usually defined in ggplot2 themes. This makes it simpler to use a textbox element in the context of an existing theme.
     plot.subtitle = ggtext::element_textbox_simple(family = "sen",
                                                    size = 17,
                                                    color = earnings_pal["light_text"],
