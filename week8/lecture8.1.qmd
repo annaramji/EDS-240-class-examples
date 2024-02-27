@@ -1,0 +1,65 @@
+
+
+
+```{r}
+#..........................load packages.........................
+library(tidyverse)
+library(palmerpenguins)
+library(showtext)
+
+#...........................load fonts...........................
+font_add_google(name = "Montserrat", family = "montserrat")
+showtext_auto()
+
+#.................get and assemble penguin image.................
+# only need to run these first two lines once to download image: 
+# url <- "https://raw.githubusercontent.com/allisonhorst/palmerpenguins/master/man/figures/culmen_depth.png"
+# utils::download.file(url = url, destfile =  here::here("week8", "images", "penguin.png"))
+my_img <- png::readPNG(here::here("week8", "images", "penguin.png"))
+my_raster_img <- grid::rasterGrob(my_img)
+
+#...........................build plot...........................
+ggplot(penguins, aes(x = bill_length_mm, y = bill_depth_mm, color = body_mass_g)) +
+  geom_point(alpha = 0.8, size = 2) +
+  ggforce::geom_mark_ellipse(aes(group = species, label = species),
+                    color = "black") +
+  scale_color_gradientn(colors = c("#F3E5B1", "#6C7B1A", "#044148")) +
+  guides(color = guide_colorbar(barwidth = 20, barheight = 0.5, 
+                                title.position = "top", title.hjust = 0.5,
+                                ticks = FALSE)) +
+  scale_x_continuous(breaks = seq(25, 65, 5),
+                     limits = c(25, 65),
+                     expand = c(0,0)) +
+  scale_y_continuous(breaks = seq(12, 24, 2),
+                     limits = c(12, 24),
+                     expand = c(0,0)) +
+  labs(x = "**Bill Length** (mm)",
+       y = "**Bill Depth** (mm)",
+       color = "Body Mass (g)",
+       title = "**Bill Dimensions of Brush-Tailed Penguins (*Phygoscelis*)**",
+       caption = "Data: Gorman, Williams, Fraser (2014) PLoS ONE | Illustration: Allison Horst") +
+  theme_light() +
+  theme(
+    plot.title.position = "plot",
+    legend.position = "top",
+    text = element_text(family = "montserrat"),
+    plot.title = ggtext::element_textbox_simple(size = 20,
+                                                margin = margin(0.5, 0, 1, 0.25, "lines")),
+    axis.title.x = ggtext::element_markdown(size = 15,
+                                            margin = margin(1, 0, 0, 0, "lines")),
+    axis.title.y = ggtext::element_markdown(size = 15,
+                                            margin = margin(0, 1, 0, 0, "lines")),
+    axis.text = element_text(size = 10),
+    axis.ticks = element_blank(),
+    legend.title = element_text(size = 14),
+    legend.text = element_text(size = 10),
+    plot.caption = element_text(face = "italic",
+                                margin = margin(2, 0, 0, 0, "lines")),
+    panel.grid.minor = element_blank()
+  ) +
+  coord_cartesian(clip = "off") +
+  annotation_custom(my_raster_img, 
+                    xmin = 56.8, xmax = 65.8,
+                    ymin = 22, ymax = 30) 
+```
+

@@ -10,7 +10,7 @@ Type and font choice influences audience perception and readability
 ```{r}
 library("monochromeR") # a package for creating monochrome color palettes and easily converting rgba values to hex codes (and also some other useful functions)
 library("showtext") # for using fonts more easily in R graphs
-library("ggtext") # improved text rendering support for ggplot2
+library(ggtext) # improved text rendering support for ggplot2
 library("ggrepel") # ggplot2 extension to repel overlapping labels
 library("googlesheets4") # provides an R interface to Google Sheets via the Sheets API v4
 
@@ -57,9 +57,8 @@ Typefaces and fonts communicate beyond more than just the written text – they 
 
     -   [Roboto](https://fonts.google.com/specimen/Roboto), [Lato](https://fonts.google.com/specimen/Lato), [Open Sans](https://fonts.google.com/specimen/Open+Sans) are good, free options
 
-```{=html}
 <!-- -->
-```
+
 -   **Serif** fonts = classy / traditional / professional / serious tone; typically only used for **visualization headlines**
 
     -   If your organization uses a serif font, consider using it in your visualization’s headline
@@ -108,7 +107,7 @@ Thin (light-weight fonts) fonts are hard to read. **Only use them in a high-cont
 
 Uppercase text is more difficult to read compared to sentence case – **limit use to headlines or labels**. Region labels on maps are commonly uppercase (e.g. see maps in these New York Times pieces, [How to Think About Ukraine, in Maps and Charts](https://www.nytimes.com/interactive/2022/02/25/opinion/russia-ukraine-invasion-maps.html) and [Closing the Back Door to Europe](https://www.nytimes.com/interactive/2015/09/15/world/europe/migrant-borders-europe.html)).
 
-### **Typographic hierarchy** 
+### **Typographic hierarchy**
 
 **No one wants to read a wall of text.** You can use font size, style, color, spacing, and typeface (or combinations of these) to create a hierarchy that guide your readers.
 
@@ -118,9 +117,8 @@ Uppercase text is more difficult to read compared to sentence case – **limit u
 
 -   **context matters** – the type(s) should fit the topic and audience
 
-```{=html}
 <!-- -->
-```
+
 -   when in doubt, **use a sans-serif style**
 
 -   choose a **monospaced** typeface with **lining figures** for numbers
@@ -454,7 +452,7 @@ plot +
 
 ```{r}
 #....................import Font Awesome fonts...................
-showtext::font_add(family = "fa-brands",
+font_add(family = "fa-brands",
          regular = here::here("fonts", "Font Awesome 6 Brands-Regular-400.otf"))
 
 # we'll refer to this as fa-regular in our font = "" in our glue("text blah blah <span style='font-family:fa-brands;'>{github_icon};</span>)  line later
