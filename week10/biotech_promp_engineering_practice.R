@@ -107,3 +107,4 @@ tukey_result <- TukeyHSD(anova_result)
 # Summary of Tukey's HSD test
 print(tukey_result)
 
+# also shows no significant difference between groups
