@@ -1,0 +1,169 @@
+---
+author: "Anna Ramji"
+date: 2024-03-11
+title: "EDS 240 | Lecture 10.1: Misc. charts: waffle & bump ch"
+---
+
+## Waffle Charts
+
+```{r}
+library(waffle) # for making waffle (square pie) charts in R
+library(ggbump) # a geom for creating bump charts
+
+knitr::opts_chunk$set(warning = FALSE, message = FALSE)
+```
+
+### Waffle chart (seasonal Bigfoot sightings in CA)
+
+Anyone may report a [Bigfoot sighting](https://github.com/rfordatascience/tidytuesday/tree/master/data/2022/2022-09-13) to the [Bigfoot Field Researchers Organization (BFRO)](https://www.bfro.net/). TidyTuesday featured these compiled BFRO reports on [2022-09-13](https://github.com/rfordatascience/tidytuesday/tree/master/data/2022/2022-09-13).
+
+```{r}
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+##                                    setup                                 ----
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+#..........................load packages.........................
+library(tidyverse)
+library(waffle) # for making waffle (square pie) charts in R
+library(showtext) # a geom for creating bump charts
+
+#..........................import data...........................
+bigfoot <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2022/2022-09-13/bigfoot.csv')
+
+#..........................import fonts..........................
+font_add_google(name = "Ultra", family = "ultra")
+font_add_google(name = "Josefin Sans", family = "josefin")
+
+#................enable {showtext} for rendering.................
+showtext_auto()
+
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+##                               data wrangling                             ----
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+ca_season_counts <- bigfoot |> 
+  filter(state == "California") |> 
+  group_by(season) |> 
+  count(season) |> 
+  filter(season != "Unknown") |> 
+  arrange(match(season, c("Spring", "Summer", "Fall", "Winter"))) |> 
+  ungroup() |> 
+  mutate(season = fct_relevel(season, "Spring", "Summer", "Fall", "Winter"))
+
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+##                                waffle chart                              ----
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+#........................create palettes.........................
+season_palette <- c("Spring" = "#357266", 
+                    "Summer" = "#FFB813", 
+                    "Fall" = "#983A06", 
+                    "Winter" = "#005F71")
+
+plot_palette <- c(gray = "#757473",
+                  beige = "#EFEFEF")
+
+#.......................create plot labels.......................
+title <- "Summer is the season of Bigfoot sightings in CA"
+subtitle <- "Winter, on the other hand, is a rare time to spot Sasquatch"
+caption <- "Source: Bigfoot Field Researchers Organization"
+```
+
+```{r in-class-waffle}
+
+
+
+```
+
+
+
+```{r}
+#......................create waffle chart.......................
+ggplot(ca_season_counts, aes(fill = season, values = n)) +
+  geom_waffle(color = "white", size = 0.3, 
+              n_rows = 10, make_proportional = FALSE) +
+  coord_equal() +
+  scale_fill_manual(values = season_palette) +
+  labs(title = title,
+       subtitle = subtitle,
+       caption = caption) +
+  theme_void() +
+  theme(
+    plot.title = element_text(family = "ultra", 
+                              size = 18, 
+                              hjust = 0.5,
+                              margin = margin(t = 0, r = 0, b = 0.3, l = 0, "cm")),
+    plot.subtitle = element_text(family = "josefin",
+                                 size = 16,
+                                 hjust = 0.5,
+                                 margin = margin(t = 0, r = 0, b = 0.5, l = 0, "cm")),
+    plot.caption = element_text(family = "josefin",
+                                size = 10,
+                                color = plot_palette["gray"], 
+                                margin = margin(t = 0.75, r = 0, b = 0, l = 0, "cm")),
+    legend.position = "bottom",
+    legend.title = element_blank(),
+    legend.text = element_text(family = "josefin",
+                               size = 12),
+    plot.background = element_rect(fill = plot_palette["beige"], 
+                                   color = plot_palette["beige"]),
+    plot.margin = margin(t = 2, r = 2, b = 2, l = 2, "cm")
+  )
+```
+
+
+### Proportional waffle chart (seasonal Bigfoot sightings in CA)
+
+```{r}
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+##                          proportional waffle chart                       ----
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+#........................create palettes.........................
+season_palette <- c("Spring" = "#357266", 
+                    "Summer" = "#FFB813", 
+                    "Fall" = "#983A06", 
+                    "Winter" = "#005F71")
+
+plot_palette <- c(gray = "#757473",
+                  beige = "#EFEFEF")
+
+#.......................create plot labels.......................
+title <- "Summer is the season of Bigfoot sightings in CA"
+subtitle <- "Only 10% of Sasquatch sightings occur in the winter"
+caption <- "Source: Bigfoot Field Researchers Organization"
+
+#......................create waffle chart.......................
+ggplot(ca_season_counts, aes(fill = season, values = n)) +
+  geom_waffle(color = "white", size = 0.3, 
+              n_rows = 10, make_proportional = TRUE) +
+  coord_equal() +
+  scale_fill_manual(values = season_palette) +
+  labs(title = title,
+       subtitle = subtitle,
+       caption = caption) +
+  theme_void() +
+  theme(
+    plot.title = element_text(family = "ultra", 
+                              size = 18, 
+                              hjust = 0.5,
+                              margin = margin(t = 1, r = 0, b = 0.3, l = 1, "cm")),
+    plot.subtitle = element_text(family = "josefin",
+                                 size = 16,
+                                 hjust = 0.5,
+                                 margin = margin(t = 0, r = 0, b = 0.5, l = 0, "cm")),
+    plot.caption = element_text(family = "josefin",
+                                size = 10,
+                                color = plot_palette["gray"], 
+                                hjust = 0,
+                                margin = margin(t = 0.75, r = 0, b = 0, l = 0, "cm")),
+    legend.position = "bottom",
+    legend.title = element_blank(),
+    legend.text = element_text(family = "josefin",
+                               size = 12),
+    plot.background = element_rect(fill = plot_palette["beige"], 
+                                   color = plot_palette["beige"]),
+    plot.margin = margin(t = 1.5, r = 9, b = 1.5, l = 8, "cm")
+  )
+```
+
